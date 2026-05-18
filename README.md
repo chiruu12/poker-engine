@@ -1,4 +1,4 @@
-# Poker Engine
+# PokerTable
 
 Pure Texas Hold'em engine with Monte Carlo equity calculator. Zero dependencies. Designed for AI agents.
 
@@ -24,7 +24,7 @@ print(f"Win probability: {equity.win_probability:.0%}")
 ## Installation
 
 ```bash
-pip install poker-engine
+pip install pokertable
 ```
 
 ## Features

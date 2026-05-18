@@ -14,8 +14,19 @@ class Suit(IntEnum):
 SUIT_SYMBOLS = {Suit.CLUBS: "♣", Suit.DIAMONDS: "♦", Suit.HEARTS: "♥", Suit.SPADES: "♠"}
 
 RANK_NAMES = {
-    2: "2", 3: "3", 4: "4", 5: "5", 6: "6", 7: "7", 8: "8",
-    9: "9", 10: "10", 11: "J", 12: "Q", 13: "K", 14: "A",
+    2: "2",
+    3: "3",
+    4: "4",
+    5: "5",
+    6: "6",
+    7: "7",
+    8: "8",
+    9: "9",
+    10: "10",
+    11: "J",
+    12: "Q",
+    13: "K",
+    14: "A",
 }
 
 
@@ -109,10 +120,7 @@ def _evaluate_five(cards: list[Card]) -> HandResult:
 
     is_flush = len(set(suits)) == 1
     sorted_unique = sorted(set(ranks), reverse=True)
-    is_straight = (
-        len(sorted_unique) == 5
-        and sorted_unique[0] - sorted_unique[4] == 4
-    )
+    is_straight = len(sorted_unique) == 5 and sorted_unique[0] - sorted_unique[4] == 4
     if sorted_unique == [14, 5, 4, 3, 2]:
         is_straight = True
         ranks = [5, 4, 3, 2, 1]

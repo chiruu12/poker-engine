@@ -420,7 +420,8 @@ class PokerEngine:
             hands.sort(key=lambda x: (x[1].rank, x[1].tiebreaker), reverse=True)
             best_hand = hands[0][1]
             pot_winners = [
-                (p, h) for p, h in hands
+                (p, h)
+                for p, h in hands
                 if h.rank == best_hand.rank and h.tiebreaker == best_hand.tiebreaker
             ]
 
@@ -438,25 +439,29 @@ class PokerEngine:
                 if existing:
                     existing.winnings += winnings
                 else:
-                    results.append(ShowdownResult(
-                        player_name=p.name,
-                        hand=h,
-                        hand_description=describe_hand(h),
-                        hole_cards=list(p.hole_cards),
-                        winnings=winnings,
-                    ))
+                    results.append(
+                        ShowdownResult(
+                            player_name=p.name,
+                            hand=h,
+                            hand_description=describe_hand(h),
+                            hole_cards=list(p.hole_cards),
+                            winnings=winnings,
+                        )
+                    )
 
         for p in active:
             if not any(r.player_name == p.name for r in results):
                 all_cards = p.hole_cards + self.community
                 hand = evaluate_hand(all_cards)
-                results.append(ShowdownResult(
-                    player_name=p.name,
-                    hand=hand,
-                    hand_description=describe_hand(hand),
-                    hole_cards=list(p.hole_cards),
-                    winnings=0,
-                ))
+                results.append(
+                    ShowdownResult(
+                        player_name=p.name,
+                        hand=hand,
+                        hand_description=describe_hand(hand),
+                        hole_cards=list(p.hole_cards),
+                        winnings=0,
+                    )
+                )
 
         self.phase = Phase.HAND_OVER
         return HandSummary(
@@ -486,8 +491,7 @@ class PokerEngine:
 
     def _compute_side_pots(self) -> list[SidePot]:
         contributors = [
-            (p.name, p.bet_this_hand, not p.folded)
-            for p in self.players if p.bet_this_hand > 0
+            (p.name, p.bet_this_hand, not p.folded) for p in self.players if p.bet_this_hand > 0
         ]
         contributors.sort(key=lambda x: x[1])
 

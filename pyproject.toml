@@ -25,8 +25,8 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/chiruu12/poker-engine"
-Repository = "https://github.com/chiruu12/poker-engine"
+Homepage = "https://github.com/chiruu12/pokertable"
+Repository = "https://github.com/chiruu12/pokertable"
 
 [build-system]
 requires = ["hatchling"]

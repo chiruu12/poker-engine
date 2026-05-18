@@ -1,4 +1,4 @@
-# Contributing to Poker Engine
+# Contributing to PokerTable
 
 ## Branching Rules
 
@@ -16,7 +16,7 @@ Open a PR to `main`, wait for CI to pass, then merge.
 ## Development Setup
 
 ```bash
-git clone https://github.com/chiruu12/poker-engine.git
+git clone https://github.com/chiruu12/pokertable.git
 cd poker-engine
 uv sync --extra dev
 ```

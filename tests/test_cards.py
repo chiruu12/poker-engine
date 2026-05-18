@@ -130,43 +130,51 @@ def test_best_of_7():
 
 
 def test_hand_comparison():
-    flush = evaluate_hand([
-        Card(14, Suit.HEARTS),
-        Card(10, Suit.HEARTS),
-        Card(7, Suit.HEARTS),
-        Card(4, Suit.HEARTS),
-        Card(2, Suit.HEARTS),
-    ])
-    pair = evaluate_hand([
-        Card(14, Suit.SPADES),
-        Card(14, Suit.HEARTS),
-        Card(10, Suit.CLUBS),
-        Card(7, Suit.DIAMONDS),
-        Card(3, Suit.CLUBS),
-    ])
+    flush = evaluate_hand(
+        [
+            Card(14, Suit.HEARTS),
+            Card(10, Suit.HEARTS),
+            Card(7, Suit.HEARTS),
+            Card(4, Suit.HEARTS),
+            Card(2, Suit.HEARTS),
+        ]
+    )
+    pair = evaluate_hand(
+        [
+            Card(14, Suit.SPADES),
+            Card(14, Suit.HEARTS),
+            Card(10, Suit.CLUBS),
+            Card(7, Suit.DIAMONDS),
+            Card(3, Suit.CLUBS),
+        ]
+    )
     assert flush > pair
 
 
 def test_describe_hand_pair():
-    result = evaluate_hand([
-        Card(14, Suit.SPADES),
-        Card(14, Suit.HEARTS),
-        Card(10, Suit.CLUBS),
-        Card(7, Suit.DIAMONDS),
-        Card(3, Suit.CLUBS),
-    ])
+    result = evaluate_hand(
+        [
+            Card(14, Suit.SPADES),
+            Card(14, Suit.HEARTS),
+            Card(10, Suit.CLUBS),
+            Card(7, Suit.DIAMONDS),
+            Card(3, Suit.CLUBS),
+        ]
+    )
     desc = describe_hand(result)
     assert "Pair" in desc
     assert "A" in desc
 
 
 def test_describe_hand_full_house():
-    result = evaluate_hand([
-        Card(13, Suit.SPADES),
-        Card(13, Suit.HEARTS),
-        Card(13, Suit.CLUBS),
-        Card(10, Suit.DIAMONDS),
-        Card(10, Suit.CLUBS),
-    ])
+    result = evaluate_hand(
+        [
+            Card(13, Suit.SPADES),
+            Card(13, Suit.HEARTS),
+            Card(13, Suit.CLUBS),
+            Card(10, Suit.DIAMONDS),
+            Card(10, Suit.CLUBS),
+        ]
+    )
     desc = describe_hand(result)
     assert "Full House" in desc

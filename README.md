@@ -102,8 +102,8 @@ print(f"Improvements: {equity.hand_improvement}") # {"Pair": 0.45, "Two Pair": 0
 ## Development
 
 ```bash
-git clone https://github.com/chiruu12/poker-engine.git
-cd poker-engine
+git clone https://github.com/chiruu12/pokertable.git
+cd pokertable
 uv sync --extra dev
 uv run pytest
 uv run ruff check src tests

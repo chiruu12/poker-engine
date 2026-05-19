@@ -223,3 +223,88 @@ def test_ante_in_bet_this_hand_not_round():
             # SB and BB have bet_this_round from blinds, others have 0
             if p.bet_this_round > 0:
                 assert p.bet_this_round in (10, 20)  # SB or BB amounts
+
+
+# --- Raise cap tests ---
+
+
+def test_raise_cap_blocks_fifth_raise():
+    names = ["A", "B", "C", "D", "E", "F"]
+    engine = PokerEngine(names, starting_chips=10000, seed=1)
+    engine.new_hand()
+    for i in range(4):
+        p = engine.get_current_player()
+        assert p is not None
+        actions = engine.get_valid_actions(p.name)
+        raises = [a for a in actions if a.type == ActionType.RAISE]
+        assert len(raises) > 0, f"Raise #{i + 1} should be allowed"
+        engine.apply_action(p.name, raises[0])
+    # 5th player should NOT see RAISE in valid actions
+    p = engine.get_current_player()
+    assert p is not None
+    actions = engine.get_valid_actions(p.name)
+    raises = [a for a in actions if a.type == ActionType.RAISE]
+    assert len(raises) == 0
+
+
+def test_raise_cap_resets_each_phase():
+    engine = PokerEngine(["A", "B", "C"], starting_chips=10000, seed=1)
+    engine.new_hand()
+    # Make raises until cap
+    for _ in range(4):
+        p = engine.get_current_player()
+        if p is None:
+            break
+        actions = engine.get_valid_actions(p.name)
+        raises = [a for a in actions if a.type == ActionType.RAISE]
+        if raises:
+            engine.apply_action(p.name, raises[0])
+    # Complete the round
+    while not engine.is_betting_round_complete():
+        p = engine.get_current_player()
+        if p is None:
+            break
+        actions = engine.get_valid_actions(p.name)
+        call = next(
+            (a for a in actions if a.type in (ActionType.CALL, ActionType.CHECK)),
+            actions[0],
+        )
+        engine.apply_action(p.name, call)
+    engine.advance_phase()
+    # After phase advance, raises should be allowed again
+    p = engine.get_current_player()
+    assert p is not None
+    actions = engine.get_valid_actions(p.name)
+    raises = [a for a in actions if a.type == ActionType.RAISE]
+    assert len(raises) > 0
+
+
+def test_raise_cap_zero_means_no_raises():
+    engine = PokerEngine(
+        ["A", "B", "C"], starting_chips=1000,
+        max_raises_per_round=0, seed=1,
+    )
+    engine.new_hand()
+    p = engine.get_current_player()
+    assert p is not None
+    actions = engine.get_valid_actions(p.name)
+    raises = [a for a in actions if a.type == ActionType.RAISE]
+    assert len(raises) == 0
+
+
+def test_raise_cap_default_is_four():
+    engine = PokerEngine(["A", "B"], seed=1)
+    assert engine._max_raises_per_round == 4
+
+
+def test_all_in_does_not_count_toward_cap():
+    engine = PokerEngine(
+        ["A", "B", "C"], starting_chips=1000, seed=1,
+    )
+    engine.new_hand()
+    p = engine.get_current_player()
+    assert p is not None
+    engine.apply_action(
+        p.name, Action(ActionType.ALL_IN, p.chips + p.bet_this_round),
+    )
+    assert engine._raises_this_round == 0

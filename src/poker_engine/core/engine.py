@@ -98,12 +98,14 @@ class PokerEngine:
         small_blind: int = 10,
         big_blind: int = 20,
         ante: int = 0,
+        max_raises_per_round: int = 4,
         seed: int | None = None,
     ):
         self._rng = random.Random(seed)
         self._small_blind = small_blind
         self._big_blind = big_blind
         self._ante = ante
+        self._max_raises_per_round = max_raises_per_round
         self._starting_chips = starting_chips
 
         self.players = [PlayerState(name=n, chips=starting_chips) for n in player_names]
@@ -120,6 +122,7 @@ class PokerEngine:
         self._action_order: list[int] = []
         self._action_pos = 0
         self.showed_cards: dict[str, list[Card]] = {}
+        self._raises_this_round = 0
 
     def new_hand(self) -> None:
         """Shuffle, deal, post blinds, start pre-flop."""
@@ -252,7 +255,11 @@ class PokerEngine:
             call_amount = min(cost_to_call, p.chips)
             actions.append(Action(ActionType.CALL, call_amount))
 
-        if p.chips > cost_to_call:
+        can_raise = (
+            p.chips > cost_to_call
+            and self._raises_this_round < self._max_raises_per_round
+        )
+        if can_raise:
             min_raise_to = self.current_bet + self.min_raise
             min_raise_cost = min_raise_to - p.bet_this_round
             if min_raise_cost <= p.chips:
@@ -309,6 +316,7 @@ class PokerEngine:
             self.pot += cost
             self.current_bet = p.bet_this_round
             self.last_raiser = player_name
+            self._raises_this_round += 1
             for other in self.players:
                 if other.name != player_name and not other.folded and not other.all_in:
                     other.has_acted = False
@@ -402,6 +410,7 @@ class PokerEngine:
         self.current_bet = 0
         self.min_raise = self._big_blind
         self.last_raiser = None
+        self._raises_this_round = 0
         for p in self.players:
             p.bet_this_round = 0
             if not p.folded and not p.all_in:

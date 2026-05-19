@@ -35,3 +35,7 @@ class BasePlayer(Protocol):
     async def get_commentary(self) -> str | None:
         """Optional: return a comment or reasoning string for TUI display."""
         ...
+
+    async def get_table_talk(self, game_state: dict[str, Any]) -> str | None:
+        """Optional: return a chat message visible to other players."""
+        ...

@@ -67,6 +67,25 @@ class EliminationEvent(TournamentEvent):
     position: int = 0
 
 
+@dataclass(frozen=True)
+class TableTalkEvent(TournamentEvent):
+    event_type: str = "table_talk"
+    player: str = ""
+    message: str = ""
+
+
+@dataclass(frozen=True)
+class CardsDealtEvent(TournamentEvent):
+    event_type: str = "cards_dealt"
+    hands: dict[str, list[str]] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class ShowdownEvent(TournamentEvent):
+    event_type: str = "showdown"
+    results: list[dict[str, Any]] = field(default_factory=list)
+
+
 class EventBus:
     """Simple pub/sub for tournament events."""
 

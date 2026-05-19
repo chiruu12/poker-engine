@@ -2,36 +2,22 @@
 
 from __future__ import annotations
 
-RED_SUITS = {"♥", "♦"}
+SUIT_STYLES = {"♥": "bold red", "♦": "bold red", "♠": "bold blue", "♣": "bold blue"}
 
 
 def render_card(card_str: str, face_down: bool = False) -> str:
     """Render a single card string with Rich markup.
 
-    Args:
-        card_str: Card like "A♠" or "K♥".
-        face_down: If True, returns a hidden card placeholder.
-
-    Returns:
-        Rich-markup string.
+    Hearts/diamonds in red, clubs/spades in blue.
     """
     if face_down:
         return "[dim]??[/dim]"
 
-    # Determine suit character (last char)
     suit_char = card_str[-1] if card_str else ""
-    if suit_char in RED_SUITS:
-        return f"[red]{card_str}[/red]"
-    return f"[white]{card_str}[/white]"
+    style = SUIT_STYLES.get(suit_char, "white")
+    return f"[{style}]{card_str}[/{style}]"
 
 
 def render_hand(cards: list[str]) -> str:
-    """Render multiple cards separated by spaces.
-
-    Args:
-        cards: List of card strings like ["A♠", "K♥"].
-
-    Returns:
-        Rich-markup string of all cards.
-    """
+    """Render multiple cards separated by spaces."""
     return " ".join(render_card(c) for c in cards)

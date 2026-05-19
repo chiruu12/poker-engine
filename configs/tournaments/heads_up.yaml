@@ -1,0 +1,6 @@
+name: "Heads Up Match"
+max_players: 2
+starting_chips: 1000
+blind_structure: turbo
+payout_structure: winner_take_all
+hand_delay: 0.0

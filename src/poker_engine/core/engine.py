@@ -76,6 +76,7 @@ class ShowdownResult:
     hand_description: str
     hole_cards: list[Card]
     winnings: int
+    contested_win: bool = False
 
 
 @dataclass
@@ -88,6 +89,39 @@ class HandSummary:
     community: list[Card] = field(default_factory=list)
 
 
+POSITION_LABELS_HU = ["Dealer/SB", "BB"]
+POSITION_LABELS_3 = ["Dealer", "SB", "BB"]
+POSITION_LABELS_4 = ["Dealer", "SB", "BB", "UTG"]
+POSITION_LABELS_5 = ["Dealer", "SB", "BB", "UTG", "CO"]
+POSITION_LABELS_6 = ["Dealer", "SB", "BB", "UTG", "HJ", "CO"]
+POSITION_LABELS_7 = ["Dealer", "SB", "BB", "UTG", "UTG+1", "HJ", "CO"]
+POSITION_LABELS_8 = ["Dealer", "SB", "BB", "UTG", "UTG+1", "LJ", "HJ", "CO"]
+POSITION_LABELS_9 = ["Dealer", "SB", "BB", "UTG", "UTG+1", "UTG+2", "LJ", "HJ", "CO"]
+POSITION_LABELS_BY_SIZE = {
+    2: POSITION_LABELS_HU,
+    3: POSITION_LABELS_3,
+    4: POSITION_LABELS_4,
+    5: POSITION_LABELS_5,
+    6: POSITION_LABELS_6,
+    7: POSITION_LABELS_7,
+    8: POSITION_LABELS_8,
+    9: POSITION_LABELS_9,
+}
+
+
+def compute_opponent_style(player: PlayerState) -> str:
+    """Label a player's style based on statistical history."""
+    if player.hands_played < 3:
+        return "unknown"
+    fold_rate = player.total_folds / max(player.hands_played, 1)
+    raise_rate = player.total_raises / max(player.hands_played, 1)
+    if raise_rate > 0.3:
+        return "aggressive" if fold_rate < 0.3 else "tricky"
+    if fold_rate > 0.4:
+        return "tight"
+    return "passive"
+
+
 class PokerEngine:
     """Pure Texas Hold'em state machine."""
 
@@ -97,11 +131,15 @@ class PokerEngine:
         starting_chips: int = 1000,
         small_blind: int = 10,
         big_blind: int = 20,
+        ante: int = 0,
+        max_raises_per_round: int = 4,
         seed: int | None = None,
     ):
         self._rng = random.Random(seed)
         self._small_blind = small_blind
         self._big_blind = big_blind
+        self._ante = ante
+        self._max_raises_per_round = max_raises_per_round
         self._starting_chips = starting_chips
 
         self.players = [PlayerState(name=n, chips=starting_chips) for n in player_names]
@@ -118,6 +156,8 @@ class PokerEngine:
         self._action_order: list[int] = []
         self._action_pos = 0
         self.showed_cards: dict[str, list[Card]] = {}
+        self._raises_this_round = 0
+        self._position_labels: dict[str, str] = {}
 
     def new_hand(self) -> None:
         """Shuffle, deal, post blinds, start pre-flop."""
@@ -135,6 +175,7 @@ class PokerEngine:
         self.action_log = []
         self.last_raiser = None
         self.showed_cards = {}
+        self._raises_this_round = 0
         self._deck_idx = 0
 
         for p in self.players:
@@ -148,6 +189,16 @@ class PokerEngine:
             if not p.folded:
                 p.hands_played += 1
 
+        if self._ante > 0:
+            for p in self.players:
+                if not p.folded:
+                    ante_amount = min(self._ante, p.chips)
+                    p.chips -= ante_amount
+                    p.bet_this_hand += ante_amount
+                    self.pot += ante_amount
+                    if p.chips == 0:
+                        p.all_in = True
+
         for p in self.players:
             if not p.folded:
                 p.hole_cards = [self._deal(), self._deal()]
@@ -155,6 +206,7 @@ class PokerEngine:
         self._post_blinds()
         self.phase = Phase.PRE_FLOP
         self._set_action_order_preflop()
+        self._position_labels = self._compute_position_labels()
 
     def _deal(self) -> Card:
         card = self.deck[self._deck_idx]
@@ -181,18 +233,18 @@ class PokerEngine:
         sb_amount = min(self._small_blind, sb_player.chips)
         sb_player.chips -= sb_amount
         sb_player.bet_this_round = sb_amount
-        sb_player.bet_this_hand = sb_amount
+        sb_player.bet_this_hand += sb_amount
         if sb_player.chips == 0:
             sb_player.all_in = True
 
         bb_amount = min(self._big_blind, bb_player.chips)
         bb_player.chips -= bb_amount
         bb_player.bet_this_round = bb_amount
-        bb_player.bet_this_hand = bb_amount
+        bb_player.bet_this_hand += bb_amount
         if bb_player.chips == 0:
             bb_player.all_in = True
 
-        self.pot = sb_amount + bb_amount
+        self.pot += sb_amount + bb_amount
         self.current_bet = bb_amount
 
     def _set_action_order_preflop(self) -> None:
@@ -240,11 +292,17 @@ class PokerEngine:
             call_amount = min(cost_to_call, p.chips)
             actions.append(Action(ActionType.CALL, call_amount))
 
-        if p.chips > cost_to_call:
+        can_raise = p.chips > cost_to_call and self._raises_this_round < self._max_raises_per_round
+        if can_raise:
             min_raise_to = self.current_bet + self.min_raise
             min_raise_cost = min_raise_to - p.bet_this_round
             if min_raise_cost <= p.chips:
                 actions.append(Action(ActionType.RAISE, min_raise_to))
+
+                half_pot = self.current_bet + (self.pot + cost_to_call) // 2
+                half_pot_cost = half_pot - p.bet_this_round
+                if half_pot_cost <= p.chips and half_pot > min_raise_to:
+                    actions.append(Action(ActionType.RAISE, half_pot))
 
                 pot_raise_to = self.current_bet + self.pot + cost_to_call
                 pot_raise_cost = pot_raise_to - p.bet_this_round
@@ -297,6 +355,7 @@ class PokerEngine:
             self.pot += cost
             self.current_bet = p.bet_this_round
             self.last_raiser = player_name
+            self._raises_this_round += 1
             for other in self.players:
                 if other.name != player_name and not other.folded and not other.all_in:
                     other.has_acted = False
@@ -390,6 +449,7 @@ class PokerEngine:
         self.current_bet = 0
         self.min_raise = self._big_blind
         self.last_raiser = None
+        self._raises_this_round = 0
         for p in self.players:
             p.bet_this_round = 0
             if not p.folded and not p.all_in:
@@ -411,6 +471,8 @@ class PokerEngine:
             if not eligible:
                 continue
 
+            contested = len(eligible) > 1
+
             hands = []
             for p in eligible:
                 all_cards = p.hole_cards + self.community
@@ -431,13 +493,16 @@ class PokerEngine:
             for i, (p, h) in enumerate(pot_winners):
                 winnings = share + (1 if i < remainder else 0)
                 p.chips += winnings
-                p.hands_won += 1
+                if contested:
+                    p.hands_won += 1
                 if p.name not in winners:
                     winners.append(p.name)
 
                 existing = next((r for r in results if r.player_name == p.name), None)
                 if existing:
                     existing.winnings += winnings
+                    if contested:
+                        existing.contested_win = True
                 else:
                     results.append(
                         ShowdownResult(
@@ -446,6 +511,7 @@ class PokerEngine:
                             hand_description=describe_hand(h),
                             hole_cards=list(p.hole_cards),
                             winnings=winnings,
+                            contested_win=contested,
                         )
                     )
 
@@ -474,11 +540,10 @@ class PokerEngine:
         )
 
     def resolve_fold_win(self) -> HandSummary:
-        """Award pot to last player standing."""
+        """Award pot to last player standing (uncontested — no hands_won increment)."""
         active = [p for p in self.players if not p.folded]
         winner = active[0] if active else self.players[0]
         winner.chips += self.pot
-        winner.hands_won += 1
         self.phase = Phase.HAND_OVER
         return HandSummary(
             hand_num=self.hand_num,
@@ -546,6 +611,36 @@ class PokerEngine:
             sb_idx = alive[(dealer_pos + 1) % n]
             bb_idx = alive[(dealer_pos + 2) % n]
         return self.players[sb_idx], self.players[bb_idx]
+
+    def get_position_labels(self) -> dict[str, str]:
+        """Return position labels cached at hand start."""
+        return dict(self._position_labels)
+
+    def _compute_position_labels(self) -> dict[str, str]:
+        """Compute position labels from players dealt into the hand."""
+        dealt_in = [p for p in self.players if not p.folded]
+        n = len(dealt_in)
+        if n == 0:
+            return {}
+        try:
+            dealer_pos = next(
+                i for i, p in enumerate(dealt_in) if p.name == self.players[self.dealer_idx].name
+            )
+        except StopIteration:
+            return {p.name: "" for p in dealt_in}
+
+        labels_list = POSITION_LABELS_BY_SIZE.get(n)
+        if labels_list is None:
+            labels_list = POSITION_LABELS_9
+
+        labels: dict[str, str] = {}
+        for i in range(n):
+            pos = (i - dealer_pos) % n
+            if pos < len(labels_list):
+                labels[dealt_in[i].name] = labels_list[pos]
+            else:
+                labels[dealt_in[i].name] = labels_list[-1]
+        return labels
 
     def _get_player(self, name: str) -> PlayerState:
         for p in self.players:

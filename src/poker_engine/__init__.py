@@ -19,6 +19,9 @@ from poker_engine.core.cards import (
     make_deck,
 )
 from poker_engine.core.engine import (
+    POSITION_LABELS_3,
+    POSITION_LABELS_BY_SIZE,
+    POSITION_LABELS_HU,
     Action,
     ActionResult,
     ActionType,
@@ -28,6 +31,7 @@ from poker_engine.core.engine import (
     PokerEngine,
     ShowdownResult,
     SidePot,
+    compute_opponent_style,
 )
 from poker_engine.core.equity import EquityResult, calculate_equity
 
@@ -44,6 +48,9 @@ __all__ = [
     "HandRank",
     "HandResult",
     "HandSummary",
+    "POSITION_LABELS_3",
+    "POSITION_LABELS_BY_SIZE",
+    "POSITION_LABELS_HU",
     "Phase",
     "PlayerState",
     "PokerEngine",
@@ -51,6 +58,7 @@ __all__ = [
     "SidePot",
     "Suit",
     "calculate_equity",
+    "compute_opponent_style",
     "describe_hand",
     "evaluate_hand",
     "make_deck",

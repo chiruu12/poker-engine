@@ -102,30 +102,24 @@ def test_view_table_not_your_turn(three_player_game):
 # ── _get_position for non-special positions ──────────────────────────
 
 
-def test_get_position_utg(three_player_game):
-    """In a 3-player game, one player is BTN, one SB, one BB — none is UTG."""
+def test_get_position_3_player(three_player_game):
+    """In a 3-player game, positions are Dealer, SB, BB."""
     engine = three_player_game
-    dealer = engine.get_dealer()
-    sb, bb = engine.get_sb_bb()
-    special = {dealer.name, sb.name, bb.name}
-    # In 3-player, all positions are BTN/SB/BB — no one is blank.
-    for name in special:
-        tk = PokerToolkit(engine, name)
+    for p in engine.players:
+        tk = PokerToolkit(engine, p.name)
         pos = tk._get_position()
-        assert pos in ("BTN", "SB", "BB")
+        assert pos in ("Dealer", "SB", "BB")
 
 
-def test_get_position_returns_empty_for_4th_player():
-    """In a 4+ player game, UTG+ gets empty string position."""
+def test_get_position_4_player_has_utg():
+    """In a 4-player game, the 4th player gets UTG."""
     engine = PokerEngine(["A", "B", "C", "D"], starting_chips=1000, seed=42)
     engine.new_hand()
-    dealer = engine.get_dealer()
-    sb, bb = engine.get_sb_bb()
-    special = {dealer.name, sb.name, bb.name}
-    others = [p.name for p in engine.players if p.name not in special]
-    if others:
-        tk = PokerToolkit(engine, others[0])
-        assert tk._get_position() == ""
+    positions = set()
+    for p in engine.players:
+        tk = PokerToolkit(engine, p.name)
+        positions.add(tk._get_position())
+    assert "UTG" in positions
 
 
 # ── view_opponents with shown cards ─────────────────────────────────

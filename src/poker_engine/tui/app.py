@@ -58,6 +58,7 @@ class PokerTUI:
 
         elif isinstance(event, PhaseChangeEvent):
             self._table_view.update_community(event.community)
+            self._refresh_players()
 
             from poker_engine.tui.card_display import style_for_card
 

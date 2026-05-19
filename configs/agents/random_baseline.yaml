@@ -1,0 +1,8 @@
+name: "Random Baseline"
+type: random
+model: ""
+provider: ""
+api_key_env: ""
+personality: ""
+temperature: 0.7
+system_prompt: ""

@@ -1,0 +1,6 @@
+name: "6-Player Sit & Go"
+max_players: 6
+starting_chips: 1500
+blind_structure: turbo
+payout_structure: top_2
+hand_delay: 0.5

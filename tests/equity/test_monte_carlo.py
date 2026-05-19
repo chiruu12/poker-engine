@@ -23,7 +23,9 @@ class TestCalculateEquityV2:
         """When use_preflop_table=False, should use Monte Carlo."""
         hole = [Card(14, Suit.SPADES), Card(14, Suit.HEARTS)]
         result = calculate_equity_v2(
-            hole, [], 1,
+            hole,
+            [],
+            1,
             seed=42,
             use_preflop_table=False,
             cache=EquityCache(),
@@ -37,7 +39,9 @@ class TestCalculateEquityV2:
         hole = [Card(14, Suit.SPADES), Card(14, Suit.HEARTS)]
         community = [Card(2, Suit.CLUBS), Card(7, Suit.DIAMONDS), Card(10, Suit.HEARTS)]
         result = calculate_equity_v2(
-            hole, community, 1,
+            hole,
+            community,
+            1,
             seed=42,
             cache=EquityCache(),
         )
@@ -66,11 +70,15 @@ class TestCalculateEquityV2:
         """V2 Monte Carlo should give similar results to core for postflop."""
         hole = [Card(14, Suit.SPADES), Card(13, Suit.SPADES)]
         community = [
-            Card(12, Suit.SPADES), Card(11, Suit.SPADES), Card(2, Suit.HEARTS),
+            Card(12, Suit.SPADES),
+            Card(11, Suit.SPADES),
+            Card(2, Suit.HEARTS),
         ]
         core_result = calculate_equity(hole, community, 1, num_simulations=2000, seed=42)
         v2_result = calculate_equity_v2(
-            hole, community, 1,
+            hole,
+            community,
+            1,
             num_simulations=2000,
             seed=42,
             cache=EquityCache(),
@@ -89,7 +97,9 @@ class TestCalculateEquityV2:
         # 94o is not in the table
         hole = [Card(9, Suit.SPADES), Card(4, Suit.HEARTS)]
         result = calculate_equity_v2(
-            hole, [], 1,
+            hole,
+            [],
+            1,
             seed=42,
             cache=EquityCache(),
         )

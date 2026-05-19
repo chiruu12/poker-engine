@@ -65,9 +65,7 @@ class LLMPlayer:
         if system_prompt:
             self._system_prompt = system_prompt
         elif personality:
-            self._system_prompt = (
-                f"{DEFAULT_SYSTEM_PROMPT}\n\nYour personality: {personality}"
-            )
+            self._system_prompt = f"{DEFAULT_SYSTEM_PROMPT}\n\nYour personality: {personality}"
         else:
             self._system_prompt = DEFAULT_SYSTEM_PROMPT
 
@@ -80,9 +78,7 @@ class LLMPlayer:
         game_state: dict[str, Any],
         valid_actions: list[dict[str, Any]],
     ) -> dict[str, Any]:
-        tool_schemas = adapt_tools(
-            self._toolkit.get_tools(), self._provider_format
-        )
+        tool_schemas = adapt_tools(self._toolkit.get_tools(), self._provider_format)
 
         turn_msg = self._build_turn_prompt(game_state, valid_actions)
         self._conversation.append({"role": "user", "content": turn_msg})
@@ -104,28 +100,39 @@ class LLMPlayer:
             self._conversation.append({"role": "assistant", **response})
 
             for tc in response["tool_calls"]:
-                result = self._toolkit.registry.call(
-                    tc["name"], tc["arguments"]
-                )
-                self._conversation.append({
-                    "role": "tool",
-                    "tool_call_id": tc["id"],
-                    "content": json.dumps(result, default=str),
-                })
-
                 if tc["name"] == "place_action":
-                    if isinstance(result, dict) and "error" not in result:
-                        self._last_commentary = response.get("content")
-                        return tc["arguments"]
+                    self._last_commentary = response.get("content")
+                    self._conversation.append(
+                        {
+                            "role": "tool",
+                            "tool_call_id": tc["id"],
+                            "content": json.dumps({"status": "action_selected"}),
+                        }
+                    )
+                    return tc["arguments"]
+
+                result = self._toolkit.registry.call(tc["name"], tc["arguments"])
+                self._conversation.append(
+                    {
+                        "role": "tool",
+                        "tool_call_id": tc["id"],
+                        "content": json.dumps(result, default=str),
+                    }
+                )
 
         return {"action": "fold"}
 
     async def observe(self, event: dict[str, Any]) -> None:
+        if event.get("type") == "new_hand":
+            self._conversation.clear()
+            return
         summary = json.dumps(event, default=str)
-        self._conversation.append({
-            "role": "user",
-            "content": f"[Game event] {summary}",
-        })
+        self._conversation.append(
+            {
+                "role": "user",
+                "content": f"[Game event] {summary}",
+            }
+        )
 
     async def get_commentary(self) -> str | None:
         return self._last_commentary
@@ -140,13 +147,11 @@ class LLMPlayer:
             f"Pot: {game_state.get('pot', 0)}.",
         ]
         actions_str = ", ".join(
-            a["action"] + (f"({a['amount']})" if a.get("amount") else "")
-            for a in valid_actions
+            a["action"] + (f"({a['amount']})" if a.get("amount") else "") for a in valid_actions
         )
         parts.append(f"Valid actions: {actions_str}")
         parts.append(
-            "Use tools to check your cards and equity, then call "
-            "place_action to make your move."
+            "Use tools to check your cards and equity, then call place_action to make your move."
         )
         return " ".join(parts)
 

@@ -28,12 +28,12 @@ def test_seat_3_players_one_table():
     assert len(tables[0].seats) == 3
 
 
-def test_seat_10_players_two_tables():
+def test_seat_too_many_players_raises():
+    import pytest
+
     tm = TableManager(max_per_table=6)
-    tables = tm.seat_players(_stubs(10))
-    assert len(tables) == 2
-    assert len(tables[0].seats) == 6
-    assert len(tables[1].seats) == 4
+    with pytest.raises(ValueError, match="Multi-table"):
+        tm.seat_players(_stubs(10))
 
 
 def test_seat_players_custom_starting_chips():
@@ -43,18 +43,17 @@ def test_seat_players_custom_starting_chips():
         assert p.chips == 5000
 
 
-def test_seed_propagation():
-    tm = TableManager(max_per_table=3)
-    tables = tm.seat_players(_stubs(6), seed=100)
-    # Table 0 gets seed 100, table 1 gets seed 101 — both deterministic.
-    # Just verify they got created with 2 tables and are playable.
-    assert len(tables) == 2
+def test_seed_produces_deterministic_deal():
+    tm = TableManager()
+    tables = tm.seat_players(_stubs(3), seed=100)
     tables[0].engine.new_hand()
-    tables[1].engine.new_hand()
-    # Different seeds should (almost certainly) produce different deals.
-    cards0 = [str(c) for p in tables[0].engine.players for c in p.hole_cards]
-    cards1 = [str(c) for p in tables[1].engine.players for c in p.hole_cards]
-    assert cards0 != cards1
+    cards1 = [str(c) for p in tables[0].engine.players for c in p.hole_cards]
+
+    tm2 = TableManager()
+    tables2 = tm2.seat_players(_stubs(3), seed=100)
+    tables2[0].engine.new_hand()
+    cards2 = [str(c) for p in tables2[0].engine.players for c in p.hole_cards]
+    assert cards1 == cards2
 
 
 # ── Table properties ─────────────────────────────────────────────────

@@ -34,9 +34,7 @@ class RandomPlayer:
     ) -> dict[str, Any]:
         folds = [a for a in valid_actions if a["action"] == "fold"]
         passive = [a for a in valid_actions if a["action"] in ("check", "call")]
-        aggressive = [
-            a for a in valid_actions if a["action"] in ("raise", "all_in")
-        ]
+        aggressive = [a for a in valid_actions if a["action"] in ("raise", "all_in")]
 
         buckets = []
         if folds:
@@ -50,9 +48,7 @@ class RandomPlayer:
             return valid_actions[0] if valid_actions else {"action": "fold"}
 
         weights = [w for w, _ in buckets]
-        chosen_bucket = self._rng.choices(
-            [acts for _, acts in buckets], weights=weights, k=1
-        )[0]
+        chosen_bucket = self._rng.choices([acts for _, acts in buckets], weights=weights, k=1)[0]
         return self._rng.choice(chosen_bucket)
 
     async def observe(self, event: dict[str, Any]) -> None:

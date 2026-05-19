@@ -27,9 +27,7 @@ class HandRecord:
         player_chips: dict[str, int],
         blind_info: tuple[int, int, int] = (10, 20, 0),
     ) -> HandRecord:
-        players = [
-            {"name": name, "chips": chips} for name, chips in player_chips.items()
-        ]
+        players = [{"name": name, "chips": chips} for name, chips in player_chips.items()]
         community = [str(c) for c in summary.community]
         return cls(
             hand_num=summary.hand_num,
@@ -55,9 +53,7 @@ class HandHistory:
         return list(self._hands)
 
     def to_json(self) -> str:
-        return json.dumps(
-            [asdict(h) for h in self._hands], indent=2, default=str
-        )
+        return json.dumps([asdict(h) for h in self._hands], indent=2, default=str)
 
     def to_file(self, path: str | Path) -> None:
         Path(path).write_text(self.to_json())
@@ -67,5 +63,7 @@ class HandHistory:
         data = json.loads(Path(path).read_text())
         history = cls()
         for entry in data:
+            if "blinds" in entry and isinstance(entry["blinds"], list):
+                entry["blinds"] = tuple(entry["blinds"])
             history._hands.append(HandRecord(**entry))
         return history

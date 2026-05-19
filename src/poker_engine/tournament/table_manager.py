@@ -26,10 +26,13 @@ class Table:
 
     @property
     def active_count(self) -> int:
-        return len([
-            s for s in self.seats
-            if any(p.chips > 0 for p in self.engine.players if p.name == s.player_name)
-        ])
+        return len(
+            [
+                s
+                for s in self.seats
+                if any(p.chips > 0 for p in self.engine.players if p.name == s.player_name)
+            ]
+        )
 
 
 class TableManager:
@@ -46,6 +49,11 @@ class TableManager:
         starting_chips: int = 1000,
         seed: int | None = None,
     ) -> list[Table]:
+        if len(players) > self._max_per_table:
+            raise ValueError(
+                f"Multi-table tournaments not yet supported. "
+                f"Max {self._max_per_table} players, got {len(players)}."
+            )
         num_tables = max(1, (len(players) + self._max_per_table - 1) // self._max_per_table)
         self._tables = []
 

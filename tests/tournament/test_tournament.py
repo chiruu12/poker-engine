@@ -121,7 +121,11 @@ class TestTournamentDirector:
         ]
         schedule = BlindSchedule.turbo()
         director = TournamentDirector(
-            players, schedule, starting_chips=200, seed=42, max_hands=30,
+            players,
+            schedule,
+            starting_chips=200,
+            seed=42,
+            max_hands=30,
         )
 
         events_received = []
@@ -143,7 +147,11 @@ class TestTournamentDirector:
         ]
         schedule = BlindSchedule([BlindLevel(1, 10, 20, 0, 5)])
         director = TournamentDirector(
-            players, schedule, starting_chips=100, seed=1, max_hands=10,
+            players,
+            schedule,
+            starting_chips=100,
+            seed=1,
+            max_hands=10,
         )
 
         result = await director.run()
@@ -159,7 +167,11 @@ class TestTournamentDirector:
         ]
         schedule = BlindSchedule.turbo()
         director = TournamentDirector(
-            players, schedule, starting_chips=100, seed=42, max_hands=5,
+            players,
+            schedule,
+            starting_chips=100,
+            seed=42,
+            max_hands=5,
         )
         await director.run()
         assert len(director.history.hands) > 0

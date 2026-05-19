@@ -37,9 +37,7 @@ class HumanPlayer:
             print(f"  {i}. {desc}")
 
         while True:
-            raw = await asyncio.to_thread(
-                input, f"Choose action (1-{len(valid_actions)}): "
-            )
+            raw = await asyncio.to_thread(input, f"Choose action (1-{len(valid_actions)}): ")
             try:
                 idx = int(raw.strip()) - 1
                 if 0 <= idx < len(valid_actions):

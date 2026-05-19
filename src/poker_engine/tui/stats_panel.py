@@ -60,9 +60,7 @@ class StatsPanel:
             bl = self._blind_level
             sb, bb = bl["small_blind"], bl["big_blind"]
             ante_str = f" ante {bl['ante']}" if bl.get("ante") else ""
-            subtitle_parts.append(
-                f"Blinds: ${sb:,}/${bb:,}{ante_str} (Lvl {bl['level']})"
-            )
+            subtitle_parts.append(f"Blinds: ${sb:,}/${bb:,}{ante_str} (Lvl {bl['level']})")
         subtitle_parts.append(f"Hands: {self._hands_played}")
         subtitle = "  |  ".join(subtitle_parts)
 

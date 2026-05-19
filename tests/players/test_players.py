@@ -1,6 +1,5 @@
 """Tests for player implementations."""
 
-
 import pytest
 
 from poker_engine.players.base import BasePlayer

@@ -1,6 +1,5 @@
 """Tests for the ToolRegistry — register, lookup, schema adapting, dispatch."""
 
-
 import pytest
 
 from poker_engine.tools.decorator import ToolDef, tool

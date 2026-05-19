@@ -62,9 +62,7 @@ def test_three_player_all_in_side_pots():
         p = engine.get_current_player()
         if p is None:
             break
-        engine.apply_action(
-            p.name, Action(ActionType.ALL_IN, p.chips + p.bet_this_round)
-        )
+        engine.apply_action(p.name, Action(ActionType.ALL_IN, p.chips + p.bet_this_round))
 
     pots = engine._compute_side_pots()
     assert len(pots) >= 2, "Should have at least a main pot and a side pot"
@@ -93,9 +91,7 @@ def test_side_pot_eligibility():
         p = engine.get_current_player()
         if p is None:
             break
-        engine.apply_action(
-            p.name, Action(ActionType.ALL_IN, p.chips + p.bet_this_round)
-        )
+        engine.apply_action(p.name, Action(ActionType.ALL_IN, p.chips + p.bet_this_round))
 
     pots = engine._compute_side_pots()
     main = pots[0]
@@ -115,9 +111,7 @@ def test_all_in_preflop_advances_to_showdown():
         p = engine.get_current_player()
         if p is None:
             break
-        engine.apply_action(
-            p.name, Action(ActionType.ALL_IN, p.chips + p.bet_this_round)
-        )
+        engine.apply_action(p.name, Action(ActionType.ALL_IN, p.chips + p.bet_this_round))
 
     # All are all-in, betting complete
     assert engine.is_betting_round_complete()
@@ -138,9 +132,7 @@ def test_all_in_preflop_advances_to_showdown():
 
 def test_short_all_in_does_not_reopen_betting():
     """All-in for less than min_raise should not reopen action."""
-    engine = PokerEngine(
-        ["A", "B", "C"], starting_chips=1000, small_blind=10, big_blind=20, seed=5
-    )
+    engine = PokerEngine(["A", "B", "C"], starting_chips=1000, small_blind=10, big_blind=20, seed=5)
     # Give A very few chips so their all-in is below min_raise
     engine.players[0].chips = 25
     engine.new_hand()
@@ -154,9 +146,7 @@ def test_short_all_in_does_not_reopen_betting():
         # should NOT have their has_acted reset because this isn't a legal raise.
         # BB already posted, but hasn't formally "acted" — that's expected.
         # The key check: if someone already acted, short all-in shouldn't reset them.
-        bb = next(
-            pl for pl in engine.players if pl.bet_this_round == 20 and not pl.all_in
-        )
+        bb = next(pl for pl in engine.players if pl.bet_this_round == 20 and not pl.all_in)
         assert not bb.has_acted  # BB has not formally acted yet
 
 
@@ -279,9 +269,7 @@ def test_fold_out_multiway_last_player_wins():
 
 
 def test_fold_out_pot_awarded_correctly():
-    engine = PokerEngine(
-        ["A", "B", "C"], starting_chips=1000, small_blind=10, big_blind=20, seed=1
-    )
+    engine = PokerEngine(["A", "B", "C"], starting_chips=1000, small_blind=10, big_blind=20, seed=1)
     engine.new_hand()
     # Blinds create a pot of 30
     assert engine.pot == 30

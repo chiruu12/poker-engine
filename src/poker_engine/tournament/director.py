@@ -52,9 +52,12 @@ class HandOrchestrator:
         engine.new_hand()
 
         dealer = engine.get_dealer()
-        self._event_bus.emit(HandStartEvent(
-            hand_num=engine.hand_num, dealer=dealer.name,
-        ))
+        self._event_bus.emit(
+            HandStartEvent(
+                hand_num=engine.hand_num,
+                dealer=dealer.name,
+            )
+        )
 
         for name, player in self._players.items():
             await player.observe({"type": "new_hand", "hand_num": engine.hand_num})
@@ -69,10 +72,12 @@ class HandOrchestrator:
                 if engine.phase == Phase.SHOWDOWN:
                     break
                 engine.advance_phase()
-                self._event_bus.emit(PhaseChangeEvent(
-                    phase=engine.phase.name,
-                    community=[str(c) for c in engine.community],
-                ))
+                self._event_bus.emit(
+                    PhaseChangeEvent(
+                        phase=engine.phase.name,
+                        community=[str(c) for c in engine.community],
+                    )
+                )
                 continue
 
             current = engine.get_current_player()
@@ -108,27 +113,34 @@ class HandOrchestrator:
                     action_str = "fold"
                     amount = 0
 
-            self._event_bus.emit(ActionEvent(
-                player=current.name,
-                action=action_str,
-                amount=amount,
-                pot=engine.pot,
-            ))
+            self._event_bus.emit(
+                ActionEvent(
+                    player=current.name,
+                    action=action_str,
+                    amount=amount,
+                    pot=engine.pot,
+                )
+            )
 
             for name, p in self._players.items():
                 if name != current.name:
-                    await p.observe({
-                        "type": "player_action",
-                        "player": current.name,
-                        "action": action_str,
-                        "amount": amount,
-                    })
+                    await p.observe(
+                        {
+                            "type": "player_action",
+                            "player": current.name,
+                            "action": action_str,
+                            "amount": amount,
+                        }
+                    )
 
             commentary = await player.get_commentary()
             if commentary:
-                self._event_bus.emit(CommentaryEvent(
-                    player=current.name, text=commentary,
-                ))
+                self._event_bus.emit(
+                    CommentaryEvent(
+                        player=current.name,
+                        text=commentary,
+                    )
+                )
 
         active = [p for p in engine.players if not p.folded]
         if len(active) <= 1:
@@ -136,11 +148,13 @@ class HandOrchestrator:
         else:
             summary = engine.resolve_showdown()
 
-        self._event_bus.emit(HandEndEvent(
-            hand_num=summary.hand_num,
-            winners=summary.winners,
-            win_reason=summary.win_reason,
-        ))
+        self._event_bus.emit(
+            HandEndEvent(
+                hand_num=summary.hand_num,
+                winners=summary.winners,
+                win_reason=summary.win_reason,
+            )
+        )
         engine.rotate_dealer()
 
         return summary
@@ -214,7 +228,9 @@ class TournamentDirector:
     async def run(self) -> TournamentResult:
         self._running = True
         self._table_manager.seat_players(
-            self._players, self._starting_chips, self._seed,
+            self._players,
+            self._starting_chips,
+            self._seed,
         )
 
         while self._running and self._hands_played < self._max_hands:
@@ -223,26 +239,31 @@ class TournamentDirector:
                 break
 
             blind = self._blind_schedule.current_level(self._hands_played)
-            self._event_bus.emit(BlindLevelEvent(
-                level=blind.level,
-                small_blind=blind.small_blind,
-                big_blind=blind.big_blind,
-                ante=blind.ante,
-            ))
+            self._event_bus.emit(
+                BlindLevelEvent(
+                    level=blind.level,
+                    small_blind=blind.small_blind,
+                    big_blind=blind.big_blind,
+                    ante=blind.ante,
+                )
+            )
 
             for table in active_tables:
                 table.engine._small_blind = blind.small_blind
                 table.engine._big_blind = blind.big_blind
 
                 orch = HandOrchestrator(
-                    table.engine, table.players, self._event_bus,
+                    table.engine,
+                    table.players,
+                    self._event_bus,
                 )
                 summary = await orch.play_hand()
 
                 if summary:
                     chips = {p.name: p.chips for p in table.engine.players}
                     record = HandRecord.from_summary(
-                        summary, chips,
+                        summary,
+                        chips,
                         (blind.small_blind, blind.big_blind, blind.ante),
                     )
                     self._history.record(record)
@@ -251,12 +272,13 @@ class TournamentDirector:
 
             eliminated = self._table_manager.eliminate_busted()
             for name in eliminated:
-                position = len(self._players) - len(
-                    self._table_manager.eliminated
-                ) + 1
-                self._event_bus.emit(EliminationEvent(
-                    player=name, position=position,
-                ))
+                position = len(self._players) - len(self._table_manager.eliminated) + 1
+                self._event_bus.emit(
+                    EliminationEvent(
+                        player=name,
+                        position=position,
+                    )
+                )
 
             self._table_manager.rebalance()
 
@@ -275,12 +297,14 @@ class TournamentDirector:
         all_players = []
         for table in self._table_manager.tables:
             for p in table.engine.players:
-                all_players.append({
-                    "name": p.name,
-                    "chips": p.chips,
-                    "hands_played": p.hands_played,
-                    "hands_won": p.hands_won,
-                })
+                all_players.append(
+                    {
+                        "name": p.name,
+                        "chips": p.chips,
+                        "hands_played": p.hands_played,
+                        "hands_won": p.hands_won,
+                    }
+                )
 
         all_players.sort(key=lambda x: x["chips"], reverse=True)
 

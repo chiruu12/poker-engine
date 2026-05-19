@@ -65,9 +65,7 @@ class PokerTUI:
 
         elif isinstance(event, HandEndEvent):
             winners = ", ".join(event.winners)
-            self._action_feed.add(
-                winners, f"wins ({event.win_reason})"
-            )
+            self._action_feed.add(winners, f"wins ({event.win_reason})")
             # Reset community for next hand
             self._table_view.update_community([])
             self._table_view.update_pot(0)
@@ -83,9 +81,7 @@ class PokerTUI:
             self._refresh_standings()
 
         elif isinstance(event, EliminationEvent):
-            self._action_feed.add(
-                event.player, f"eliminated (#{event.position})"
-            )
+            self._action_feed.add(event.player, f"eliminated (#{event.position})")
             self._refresh_standings()
 
         # Trigger a live refresh if running
@@ -121,13 +117,15 @@ class PokerTUI:
                 tag = ""
                 if hasattr(p, "is_dealer") and p.is_dealer:
                     tag = "BTN"
-                players.append({
-                    "name": p.name,
-                    "chips": p.chips,
-                    "position_tag": tag,
-                    "is_active": False,
-                    "folded": p.folded,
-                })
+                players.append(
+                    {
+                        "name": p.name,
+                        "chips": p.chips,
+                        "position_tag": tag,
+                        "is_active": False,
+                        "folded": p.folded,
+                    }
+                )
         return players
 
     def build_layout(self) -> Layout:

@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import inspect
 import re
+import types
+from dataclasses import MISSING, is_dataclass
 from dataclasses import fields as dc_fields
-from dataclasses import is_dataclass
 from enum import Enum
 from typing import Any, Union, get_args, get_origin, get_type_hints
 
@@ -28,7 +29,7 @@ def python_type_to_json_schema(tp: Any) -> dict[str, Any]:
     origin = get_origin(tp)
     args = get_args(tp)
 
-    if origin is Union:
+    if origin is Union or isinstance(tp, types.UnionType):
         non_none = [a for a in args if a is not type(None)]
         if len(non_none) == 1:
             return python_type_to_json_schema(non_none[0])
@@ -58,7 +59,7 @@ def python_type_to_json_schema(tp: Any) -> dict[str, Any]:
         hints = get_type_hints(tp)
         for f in dc_fields(tp):
             props[f.name] = python_type_to_json_schema(hints.get(f.name, Any))
-            if f.default is f.default_factory and f.default is dc_fields.__class__:
+            if f.default is MISSING and f.default_factory is MISSING:
                 required.append(f.name)
         schema = {"type": "object", "properties": props}
         if required:
@@ -135,7 +136,7 @@ def extract_schema(fn: Any) -> dict[str, Any]:
         tp = hints.get(name, Any)
         origin = get_origin(tp)
         args = get_args(tp)
-        is_optional = origin is Union and type(None) in args
+        is_optional = (origin is Union or isinstance(tp, types.UnionType)) and type(None) in args
 
         prop = python_type_to_json_schema(tp)
         if name in doc_args:

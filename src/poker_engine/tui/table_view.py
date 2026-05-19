@@ -28,43 +28,43 @@ TABLE_W = 56
 
 SEAT_LAYOUTS: dict[int, list[list[int | None]]] = {
     2: [
-        [1],       # top
-        [None],    # center
-        [0],       # bottom
+        [1],  # top
+        [None],  # center
+        [0],  # bottom
     ],
     3: [
-        [None],    # center (top)
-        [1, 2],    # middle sides
-        [0],       # bottom
+        [None],  # center (top)
+        [1, 2],  # middle sides
+        [0],  # bottom
     ],
     4: [
-        [2, 3],    # top
+        [2, 3],  # top
         [1, None, None],  # middle-left + center
         [0, None, None],  # bottom-left (special: right empty)
     ],
     5: [
-        [2, 3],    # top
-        [1, 4],    # middle sides
-        [0],       # bottom center (seat 5 doesn't exist for 5)
+        [2, 3],  # top
+        [1, 4],  # middle sides
+        [0],  # bottom center (seat 5 doesn't exist for 5)
     ],
     6: [
-        [2, 3],    # top
-        [1, 4],    # middle sides
-        [0, 5],    # bottom
+        [2, 3],  # top
+        [1, 4],  # middle sides
+        [0, 5],  # bottom
     ],
     7: [
-        [3, 4],      # top
-        [2, 5],      # middle sides
-        [0, 1, 6],   # bottom
+        [3, 4],  # top
+        [2, 5],  # middle sides
+        [0, 1, 6],  # bottom
     ],
     8: [
-        [3, 4, 5],   # top
-        [2, 6],      # middle sides
-        [0, 1, 7],   # bottom
+        [3, 4, 5],  # top
+        [2, 6],  # middle sides
+        [0, 1, 7],  # bottom
     ],
     9: [
-        [3, 4, 5],   # top
-        [2, 6],      # middle sides
+        [3, 4, 5],  # top
+        [2, 6],  # middle sides
         [0, 1, 7, 8],  # bottom
     ],
 }
@@ -119,9 +119,7 @@ def _make_player_box(player: dict[str, Any] | None) -> list[str]:
     ]
 
 
-def _make_center_box(
-    community: list[str], pot: int, hand_num: int
-) -> list[str]:
+def _make_center_box(community: list[str], pot: int, hand_num: int) -> list[str]:
     """Build the center community-card / pot display."""
     inner_w = 20
 
@@ -179,16 +177,12 @@ class TableView:
 
         layout_key = min(n, 9)
         layout = SEAT_LAYOUTS[layout_key]
-        center_box = _make_center_box(
-            self._community, self._pot, self._hand_num
-        )
+        center_box = _make_center_box(self._community, self._pot, self._hand_num)
 
         lines: list[str] = []
 
         for row_idx, seat_indices in enumerate(layout):
-            row_lines = self._render_row(
-                seat_indices, center_box, row_idx, layout
-            )
+            row_lines = self._render_row(seat_indices, center_box, row_idx, layout)
             lines.extend(row_lines)
 
         content = Text.from_markup("\n".join(lines))
@@ -224,9 +218,7 @@ class TableView:
 
         # Special case: 4-player compact layout
         if layout_key == 4:
-            return self._render_4p_row(
-                seat_indices, center_box, row_idx
-            )
+            return self._render_4p_row(seat_indices, center_box, row_idx)
 
         # Standard layouts (2, 5-9)
         if layout_key == 2:
@@ -244,9 +236,7 @@ class TableView:
             return self._players[idx]
         return None
 
-    def _render_seat_row(
-        self, seat_indices: list[int | None]
-    ) -> list[str]:
+    def _render_seat_row(self, seat_indices: list[int | None]) -> list[str]:
         """Render a row of player boxes centered on the table."""
         boxes = []
         for idx in seat_indices:
@@ -296,14 +286,8 @@ class TableView:
         center_box: list[str],
     ) -> list[str]:
         """Render left seat + center + right seat."""
-        left_player = (
-            self._get_player(seat_indices[0]) if seat_indices else None
-        )
-        right_player = (
-            self._get_player(seat_indices[1])
-            if len(seat_indices) > 1
-            else None
-        )
+        left_player = self._get_player(seat_indices[0]) if seat_indices else None
+        right_player = self._get_player(seat_indices[1]) if len(seat_indices) > 1 else None
 
         left_box = _make_player_box(left_player)
         right_box = _make_player_box(right_player)
@@ -330,10 +314,7 @@ class TableView:
             left = left_box[i] if left_player else " " * full_box_w
             right = right_box[i] if right_player else " " * full_box_w
             center = center_box[i]
-            line = (
-                " " * left_pad
-                + left + " " * gap + center + " " * gap + right
-            )
+            line = " " * left_pad + left + " " * gap + center + " " * gap + right
             result.append(line)
         return result
 

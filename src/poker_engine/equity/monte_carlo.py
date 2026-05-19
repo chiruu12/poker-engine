@@ -40,12 +40,7 @@ def calculate_equity_v2(
     """
     equity_cache = cache if cache is not None else _default_cache
 
-    # Check cache first
-    cached = equity_cache.get(hole_cards, community_cards, num_opponents)
-    if cached is not None:
-        return cached
-
-    # Try preflop lookup when no community cards
+    # Try preflop lookup when no community cards (cached — deterministic)
     if use_preflop_table and len(community_cards) == 0:
         preflop_equity = lookup_preflop_equity(hole_cards, num_opponents)
         if preflop_equity is not None:
@@ -60,14 +55,12 @@ def calculate_equity_v2(
             equity_cache.put(hole_cards, community_cards, num_opponents, result)
             return result
 
-    # Fall back to Monte Carlo simulation
-    result = calculate_equity(
+    # Fall back to Monte Carlo simulation (not cached — result depends on
+    # num_simulations and seed which aren't in the cache key)
+    return calculate_equity(
         hole_cards=hole_cards,
         community_cards=community_cards,
         num_opponents=num_opponents,
         num_simulations=num_simulations,
         seed=seed,
     )
-
-    equity_cache.put(hole_cards, community_cards, num_opponents, result)
-    return result

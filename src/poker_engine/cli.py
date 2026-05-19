@@ -96,9 +96,25 @@ def _parse_card_str(card_str: str) -> tuple[int, int]:
 
     suit_map = {"s": Suit.SPADES, "h": Suit.HEARTS, "d": Suit.DIAMONDS, "c": Suit.CLUBS}
     rank_map = {
-        "2": 2, "3": 3, "4": 4, "5": 5, "6": 6, "7": 7, "8": 8, "9": 9,
-        "10": 10, "T": 10, "t": 10, "J": 11, "j": 11, "Q": 12, "q": 12,
-        "K": 13, "k": 13, "A": 14, "a": 14,
+        "2": 2,
+        "3": 3,
+        "4": 4,
+        "5": 5,
+        "6": 6,
+        "7": 7,
+        "8": 8,
+        "9": 9,
+        "10": 10,
+        "T": 10,
+        "t": 10,
+        "J": 11,
+        "j": 11,
+        "Q": 12,
+        "q": 12,
+        "K": 13,
+        "k": 13,
+        "A": 14,
+        "a": 14,
     }
 
     match = re.match(r"^(10|[2-9TtJjQqKkAa])([SsHhDdCc])$", card_str)
@@ -118,9 +134,7 @@ def equity(
         ..., help="Hole cards, e.g. 'As Kh' or 'AsTd'."
     ),
     opponents: int = typer.Option(1, "--opponents", "-o", help="Number of opponents."),
-    simulations: int = typer.Option(
-        2000, "--simulations", "-n", help="Monte Carlo simulations."
-    ),
+    simulations: int = typer.Option(2000, "--simulations", "-n", help="Monte Carlo simulations."),
 ) -> None:
     """Calculate hand equity from the command line.
 
@@ -130,15 +144,11 @@ def equity(
 
     # Handle case where cards are passed as a single string like "AsKh"
     raw_cards: list[str] = []
+    card_pattern = re.compile(r"(10|[2-9TtJjQqKkAa])([SsHhDdCc])")
     for c in cards:
-        if len(c) == 4 and re.match(r"^[2-9TtJjQqKkAa][SsHhDdCc]{2}", c):
-            # Could be two cards concatenated like "AsKh"
-            raw_cards.append(c[:2])
-            raw_cards.append(c[2:])
-        elif len(c) == 5 and c[:2] == "10":
-            # "10sKh" type concat
-            raw_cards.append(c[:3])
-            raw_cards.append(c[3:])
+        tokens = card_pattern.findall(c)
+        if tokens:
+            raw_cards.extend(f"{rank}{suit}" for rank, suit in tokens)
         else:
             raw_cards.append(c)
 

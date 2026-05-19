@@ -124,12 +124,24 @@ def test_place_action_raise(game):
     assert result["pot"] > 30
 
 
-def test_toolkit_get_tools_returns_five(game):
+def test_toolkit_get_tools_returns_all(game):
     toolkit = PokerToolkit(game, "Alice")
     tools = toolkit.get_tools()
-    assert len(tools) == 5
+    assert len(tools) == 7
     names = {t.name for t in tools}
-    assert names == {"view_hand", "view_table", "check_equity", "view_opponents", "place_action"}
+    assert names == {
+        "view_hand", "view_table", "check_equity", "view_opponents",
+        "place_action", "share_thinking", "say_to_table",
+    }
+
+
+def test_toolkit_without_table_talk(game):
+    toolkit = PokerToolkit(game, "Alice", table_talk=False)
+    tools = toolkit.get_tools()
+    assert len(tools) == 6
+    names = {t.name for t in tools}
+    assert "say_to_table" not in names
+    assert "share_thinking" in names
 
 
 def test_toolkit_schemas_have_valid_structure(game):

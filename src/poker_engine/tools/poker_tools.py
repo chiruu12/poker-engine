@@ -18,17 +18,24 @@ class PokerToolkit:
     Enforces information hiding — agents can only see their own hole cards.
     """
 
-    def __init__(self, engine: PokerEngine, player_name: str) -> None:
+    def __init__(self, engine: PokerEngine, player_name: str, table_talk: bool = True) -> None:
         self._engine = engine
         self._player_name = player_name
+        self._table_talk_enabled = table_talk
+        self._last_talk: str | None = None
+        self._last_thinking: str | None = None
         self._registry = ToolRegistry()
-        self._registry.register_all(
+        tools = [
             self.view_hand,
             self.view_table,
             self.check_equity,
             self.view_opponents,
             self.place_action,
-        )
+            self.share_thinking,
+        ]
+        if table_talk:
+            tools.append(self.say_to_table)
+        self._registry.register_all(*tools)
 
     @property
     def registry(self) -> ToolRegistry:
@@ -184,6 +191,33 @@ class PokerToolkit:
             "your_chips": result.new_chip_count,
             "pot": result.pot_after,
         }
+
+    @tool()
+    def say_to_table(self, message: str) -> dict[str, Any]:
+        """Say something to the other players at the table.
+
+        Use this to trash talk, bluff, be friendly, or comment on the hand.
+        Other players will see your message. Keep it short — one sentence.
+
+        Args:
+            message: What you want to say to the table. One sentence max.
+        """
+        self._last_talk = message[:120]
+        return {"said": self._last_talk}
+
+    @tool()
+    def share_thinking(self, thought: str) -> dict[str, Any]:
+        """Record your internal reasoning about the current hand.
+
+        Use this to explain WHY you're making a decision — your read on
+        opponents, pot odds calculation, hand strength assessment, etc.
+        This is shown to spectators but NOT to other players.
+
+        Args:
+            thought: Your reasoning about the current situation.
+        """
+        self._last_thinking = thought[:150]
+        return {"recorded": self._last_thinking}
 
     def _find_matching_action(
         self, valid: list[Any], action_type: ActionType, amount: int

@@ -32,7 +32,9 @@ DEFAULT_SYSTEM_PROMPT = """You are playing Texas Hold'em poker. \
 Use the provided tools to view your cards, check equity, \
 view opponents, and place your action. Think strategically \
 about pot odds, position, and opponent tendencies. \
-Always call place_action to make your move."""
+Always call place_action to make your move. \
+Use share_thinking to explain your reasoning about the hand. \
+Use say_to_table to talk to other players (trash talk, bluff, be friendly)."""
 
 
 class LLMPlayer:
@@ -135,30 +137,18 @@ class LLMPlayer:
         )
 
     async def get_commentary(self) -> str | None:
+        thinking = self._toolkit._last_thinking
+        if thinking:
+            self._toolkit._last_thinking = None
+            return thinking
         return self._last_commentary
 
     async def get_table_talk(self, game_state: dict[str, Any]) -> str | None:
-        try:
-            response = await self._adapter.generate(
-                messages=[
-                    {"role": "system", "content": self._system_prompt},
-                    *self._conversation,
-                    {
-                        "role": "user",
-                        "content": (
-                            "Say something short to the other players at the table. "
-                            "Trash talk, bluff, be friendly — your personality. "
-                            "One sentence max. Just the message, nothing else."
-                        ),
-                    },
-                ],
-                tools=[],
-                temperature=0.9,
-            )
-            msg = (response.get("content") or "").strip()
-            return msg[:120] if msg else None
-        except Exception:
-            return None
+        talk = self._toolkit._last_talk
+        if talk:
+            self._toolkit._last_talk = None
+            return talk
+        return None
 
     def _build_turn_prompt(
         self,

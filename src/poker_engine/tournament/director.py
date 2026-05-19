@@ -49,7 +49,7 @@ class HandOrchestrator:
         self._event_bus = event_bus
         self._table_talk = table_talk
         self._toolkits: dict[str, PokerToolkit] = {
-            name: PokerToolkit(engine, name) for name in players
+            name: PokerToolkit(engine, name, table_talk=table_talk) for name in players
         }
 
     async def play_hand(self) -> Any:

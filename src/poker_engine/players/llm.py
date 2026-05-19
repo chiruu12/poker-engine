@@ -137,6 +137,29 @@ class LLMPlayer:
     async def get_commentary(self) -> str | None:
         return self._last_commentary
 
+    async def get_table_talk(self, game_state: dict[str, Any]) -> str | None:
+        try:
+            response = await self._adapter.generate(
+                messages=[
+                    {"role": "system", "content": self._system_prompt},
+                    *self._conversation,
+                    {
+                        "role": "user",
+                        "content": (
+                            "Say something short to the other players at the table. "
+                            "Trash talk, bluff, be friendly — your personality. "
+                            "One sentence max. Just the message, nothing else."
+                        ),
+                    },
+                ],
+                tools=[],
+                temperature=0.9,
+            )
+            msg = (response.get("content") or "").strip()
+            return msg[:120] if msg else None
+        except Exception:
+            return None
+
     def _build_turn_prompt(
         self,
         game_state: dict[str, Any],

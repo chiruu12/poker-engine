@@ -12,12 +12,15 @@ from poker_engine.tournament.blind_schedule import BlindSchedule
 from poker_engine.tournament.events import (
     ActionEvent,
     BlindLevelEvent,
+    CardsDealtEvent,
     CommentaryEvent,
     EliminationEvent,
     EventBus,
     HandEndEvent,
     HandStartEvent,
     PhaseChangeEvent,
+    ShowdownEvent,
+    TableTalkEvent,
 )
 from poker_engine.tournament.history import HandHistory, HandRecord
 from poker_engine.tournament.payout import PayoutStructure
@@ -39,10 +42,12 @@ class HandOrchestrator:
         engine: PokerEngine,
         players: dict[str, Any],
         event_bus: EventBus,
+        table_talk: bool = True,
     ) -> None:
         self._engine = engine
         self._players = players
         self._event_bus = event_bus
+        self._table_talk = table_talk
         self._toolkits: dict[str, PokerToolkit] = {
             name: PokerToolkit(engine, name) for name in players
         }
@@ -58,6 +63,9 @@ class HandOrchestrator:
                 dealer=dealer.name,
             )
         )
+
+        hands = {p.name: [str(c) for c in p.hole_cards] for p in engine.players if not p.folded}
+        self._event_bus.emit(CardsDealtEvent(hands=hands))
 
         for name, player in self._players.items():
             await player.observe({"type": "new_hand", "hand_num": engine.hand_num})
@@ -142,11 +150,40 @@ class HandOrchestrator:
                     )
                 )
 
+            if self._table_talk and hasattr(player, "get_table_talk"):
+                try:
+                    game_state = self._build_game_state(current.name)
+                    talk = await player.get_table_talk(game_state)
+                    if talk:
+                        self._event_bus.emit(TableTalkEvent(player=current.name, message=talk))
+                        for name, p in self._players.items():
+                            if name != current.name:
+                                await p.observe(
+                                    {
+                                        "type": "table_talk",
+                                        "player": current.name,
+                                        "message": talk,
+                                    }
+                                )
+                except Exception:
+                    pass
+
         active = [p for p in engine.players if not p.folded]
         if len(active) <= 1:
             summary = engine.resolve_fold_win()
         else:
             summary = engine.resolve_showdown()
+            if summary.results:
+                showdown_results = [
+                    {
+                        "player": r.player_name,
+                        "hand": r.hand_description,
+                        "cards": [str(c) for c in r.hole_cards],
+                        "winnings": r.winnings,
+                    }
+                    for r in summary.results
+                ]
+                self._event_bus.emit(ShowdownEvent(results=showdown_results))
 
         self._event_bus.emit(
             HandEndEvent(
@@ -196,6 +233,7 @@ class TournamentDirector:
         seed: int | None = None,
         hand_delay: float = 0.0,
         max_hands: int = 500,
+        table_talk: bool = True,
     ) -> None:
         self._players = players
         self._blind_schedule = blind_schedule
@@ -204,11 +242,13 @@ class TournamentDirector:
         self._seed = seed
         self._hand_delay = hand_delay
         self._max_hands = max_hands
+        self._table_talk = table_talk
         self._event_bus = EventBus()
         self._history = HandHistory()
         self._table_manager = TableManager(max_per_table=9)
         self._running = False
         self._hands_played = 0
+        self._last_blind_level = 0
 
     @property
     def event_bus(self) -> EventBus:
@@ -239,14 +279,16 @@ class TournamentDirector:
                 break
 
             blind = self._blind_schedule.current_level(self._hands_played)
-            self._event_bus.emit(
-                BlindLevelEvent(
-                    level=blind.level,
-                    small_blind=blind.small_blind,
-                    big_blind=blind.big_blind,
-                    ante=blind.ante,
+            if blind.level != self._last_blind_level:
+                self._last_blind_level = blind.level
+                self._event_bus.emit(
+                    BlindLevelEvent(
+                        level=blind.level,
+                        small_blind=blind.small_blind,
+                        big_blind=blind.big_blind,
+                        ante=blind.ante,
+                    )
                 )
-            )
 
             for table in active_tables:
                 table.engine._small_blind = blind.small_blind
@@ -256,6 +298,7 @@ class TournamentDirector:
                     table.engine,
                     table.players,
                     self._event_bus,
+                    table_talk=self._table_talk,
                 )
                 summary = await orch.play_hand()
 

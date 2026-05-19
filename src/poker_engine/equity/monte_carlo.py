@@ -40,7 +40,12 @@ def calculate_equity_v2(
     """
     equity_cache = cache if cache is not None else _default_cache
 
-    # Try preflop lookup when no community cards (cached — deterministic)
+    # Check cache (only stores deterministic preflop results)
+    cached = equity_cache.get(hole_cards, community_cards, num_opponents)
+    if cached is not None:
+        return cached
+
+    # Try preflop lookup when no community cards
     if use_preflop_table and len(community_cards) == 0:
         preflop_equity = lookup_preflop_equity(hole_cards, num_opponents)
         if preflop_equity is not None:

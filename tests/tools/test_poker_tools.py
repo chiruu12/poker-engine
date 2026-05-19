@@ -130,8 +130,13 @@ def test_toolkit_get_tools_returns_all(game):
     assert len(tools) == 7
     names = {t.name for t in tools}
     assert names == {
-        "view_hand", "view_table", "check_equity", "view_opponents",
-        "place_action", "share_thinking", "say_to_table",
+        "view_hand",
+        "view_table",
+        "check_equity",
+        "view_opponents",
+        "place_action",
+        "share_thinking",
+        "say_to_table",
     }
 
 

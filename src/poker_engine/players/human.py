@@ -59,5 +59,4 @@ class HumanPlayer:
         return None
 
     async def get_table_talk(self, game_state: dict[str, Any]) -> str | None:
-        raw = await asyncio.to_thread(input, "Say something (or press Enter to skip): ")
-        return raw.strip() or None
+        return None

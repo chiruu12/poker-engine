@@ -59,17 +59,15 @@ class PokerTUI:
         elif isinstance(event, PhaseChangeEvent):
             self._table_view.update_community(event.community)
 
+            from poker_engine.tui.card_display import style_for_card
+
             line = Text()
             line.append("Board ", style="bold yellow")
             line.append(f"{event.phase}: ", style="yellow")
             for i, c in enumerate(event.community):
                 if i > 0:
                     line.append(" ")
-                suit = c[-1] if c else ""
-                style = {"♥": "bold red", "♦": "bold red", "♠": "bold blue", "♣": "bold blue"}.get(
-                    suit, "white"
-                )
-                line.append(c, style=style)
+                line.append(c, style=style_for_card(c))
             self._action_feed.add_rich(line)
 
         elif isinstance(event, ActionEvent):
@@ -114,7 +112,7 @@ class PokerTUI:
             self._live.update(self.build_layout())
 
     def _refresh_players(self, active: str = "", folded_action: str = "") -> None:
-        tables = self._director._table_manager.tables
+        tables = self._director.tables
         if not tables:
             return
 

@@ -7,6 +7,7 @@ full-screen TUI layout. Subscribes to the same EventBus as PokerTUI.
 from __future__ import annotations
 
 from rich.console import Console
+from rich.markup import escape
 from rich.table import Table
 
 from poker_engine.tournament.director import TournamentDirector, TournamentResult
@@ -23,8 +24,8 @@ from poker_engine.tournament.events import (
     TableTalkEvent,
     TournamentEvent,
 )
+from poker_engine.tui.card_display import SUIT_STYLES
 
-SUIT_COLORS = {"♥": "bold red", "♦": "bold red", "♠": "bold blue", "♣": "bold blue"}
 ACTION_STYLES = {
     "fold": "red",
     "call": "green",
@@ -35,9 +36,9 @@ ACTION_STYLES = {
 
 
 def _color_card(c: str) -> str:
-    for suit, color in SUIT_COLORS.items():
+    for suit, style in SUIT_STYLES.items():
         if suit in c:
-            return f"[{color}]{c}[/{color}]"
+            return f"[{style}]{c}[/{style}]"
     return c
 
 
@@ -97,7 +98,7 @@ class ConsoleDisplay:
 
         elif isinstance(event, CommentaryEvent):
             short = event.text[:80] + "..." if len(event.text) > 80 else event.text
-            c.print(f"    [dim italic]💭 {event.player}: {short}[/dim italic]")
+            c.print(f"    [dim italic]💭 {event.player}: {escape(short)}[/dim italic]")
 
         elif isinstance(event, ShowdownEvent):
             c.print()
@@ -121,7 +122,9 @@ class ConsoleDisplay:
             self._current_blind["bb"] = event.big_blind
 
         elif isinstance(event, TableTalkEvent):
-            c.print(f'    [magenta]{event.player}:[/magenta] [italic]"{event.message}"[/italic]')
+            c.print(
+                f'    [magenta]{event.player}:[/magenta] [italic]"{escape(event.message)}"[/italic]'
+            )
 
         elif isinstance(event, EliminationEvent):
             c.print(f"  [bold red]💀 {event.player} eliminated (#{event.position})[/bold red]")

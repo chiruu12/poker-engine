@@ -7,6 +7,8 @@ from typing import Any
 from rich.panel import Panel
 from rich.text import Text
 
+from poker_engine.tui.card_display import SUIT_STYLES
+
 BOX_W = 14
 CENTER_W = 28
 TABLE_W = 72
@@ -22,7 +24,6 @@ SEAT_LAYOUTS: dict[int, list[list[int | None]]] = {
     9: [[3, 4, 5], [2, 6], [0, 1, 7, 8]],
 }
 
-SUIT_STYLES = {"♥": "bold red", "♦": "bold red", "♠": "bold blue", "♣": "bold blue"}
 PLAYER_BOX_LINES = 5
 FULL_BOX_W = BOX_W + 2
 CENTER_BOX_W = CENTER_W + 2
@@ -235,6 +236,7 @@ class TableView:
 
         left_box = _make_player_box(self._get_player(left_idx) if left_idx is not None else None)
         right_box = _make_player_box(self._get_player(right_idx) if right_idx is not None else None)
+        center = list(center)
 
         max_lines = max(len(left_box), len(center), len(right_box))
         while len(left_box) < max_lines:

@@ -262,11 +262,17 @@ class TournamentDirector:
     def hands_played(self) -> int:
         return self._hands_played
 
+    @property
+    def tables(self) -> list[Any]:
+        return self._table_manager.tables
+
     def on_event(self, callback: Any) -> None:
         self._event_bus.subscribe(callback)
 
     async def run(self) -> TournamentResult:
         self._running = True
+        self._last_blind_level = 0
+        self._hands_played = 0
         self._table_manager.seat_players(
             self._players,
             self._starting_chips,

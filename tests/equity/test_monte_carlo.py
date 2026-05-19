@@ -92,6 +92,20 @@ class TestCalculateEquityV2:
         result = calculate_equity_v2(hole, [], 0, cache=EquityCache())
         assert result.win_probability == 1.0
 
+    def test_cache_hit_skips_lookup(self) -> None:
+        """Regression: second call must read from cache, not re-run lookup."""
+        from unittest.mock import patch
+
+        cache = EquityCache()
+        hole = [Card(14, Suit.SPADES), Card(14, Suit.HEARTS)]
+        calculate_equity_v2(hole, [], 1, cache=cache)
+        assert cache.size == 1
+
+        with patch("poker_engine.equity.monte_carlo.lookup_preflop_equity") as mock_lookup:
+            result = calculate_equity_v2(hole, [], 1, cache=cache)
+            mock_lookup.assert_not_called()
+        assert result.win_probability == 0.852
+
     def test_unknown_preflop_hand_falls_back_to_monte_carlo(self) -> None:
         """A hand not in the preflop table should still work via Monte Carlo."""
         # 94o is not in the table

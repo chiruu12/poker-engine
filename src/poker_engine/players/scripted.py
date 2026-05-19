@@ -35,3 +35,6 @@ class ScriptedPlayer:
 
     async def get_commentary(self) -> str | None:
         return None
+
+    async def get_table_talk(self, game_state: dict[str, Any]) -> str | None:
+        return None

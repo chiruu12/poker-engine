@@ -484,3 +484,50 @@ def test_style_tight():
 def test_style_passive():
     p = PlayerState(name="X", chips=1000, hands_played=10, total_folds=2, total_raises=2)
     assert compute_opponent_style(p) == "passive"
+
+
+# --- Position label tests ---
+
+
+def test_position_labels_2_players():
+    engine = PokerEngine(["A", "B"], seed=1)
+    engine.new_hand()
+    labels = engine.get_position_labels()
+    assert set(labels.values()) == {"Dealer/SB", "BB"}
+
+
+def test_position_labels_3_players():
+    engine = PokerEngine(["A", "B", "C"], seed=1)
+    engine.new_hand()
+    labels = engine.get_position_labels()
+    assert set(labels.values()) == {"Dealer", "SB", "BB"}
+
+
+def test_position_labels_4_players():
+    engine = PokerEngine(["A", "B", "C", "D"], seed=1)
+    engine.new_hand()
+    labels = engine.get_position_labels()
+    assert "UTG" in labels.values()
+    assert "Dealer" in labels.values()
+
+
+def test_position_labels_6_players():
+    names = ["A", "B", "C", "D", "E", "F"]
+    engine = PokerEngine(names, seed=1)
+    engine.new_hand()
+    labels = engine.get_position_labels()
+    assert len(labels) == 6
+    vals = set(labels.values())
+    assert "Dealer" in vals
+    assert "SB" in vals
+    assert "BB" in vals
+
+
+def test_position_labels_9_players():
+    names = [f"P{i}" for i in range(9)]
+    engine = PokerEngine(names, seed=1)
+    engine.new_hand()
+    labels = engine.get_position_labels()
+    assert len(labels) == 9
+    # 8 labels in POSITION_LABELS_4P + 1 overflow
+    assert "Seat8" in labels.values()

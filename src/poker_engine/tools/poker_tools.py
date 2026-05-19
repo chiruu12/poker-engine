@@ -46,17 +46,10 @@ class PokerToolkit:
 
     def _get_position(self) -> str:
         try:
-            sb, bb = self._engine.get_sb_bb()
-            dealer = self._engine.get_dealer()
-            if self._player_name == dealer.name:
-                return "BTN"
-            if self._player_name == sb.name:
-                return "SB"
-            if self._player_name == bb.name:
-                return "BB"
+            labels = self._engine.get_position_labels()
+            return labels.get(self._player_name, "")
         except (IndexError, ValueError):
-            pass
-        return ""
+            return ""
 
     @tool()
     def view_hand(self) -> dict[str, Any]:

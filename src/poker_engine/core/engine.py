@@ -89,6 +89,11 @@ class HandSummary:
     community: list[Card] = field(default_factory=list)
 
 
+POSITION_LABELS_HU = ["Dealer/SB", "BB"]
+POSITION_LABELS_3 = ["Dealer", "SB", "BB"]
+POSITION_LABELS_4P = ["Dealer", "SB", "BB", "UTG", "UTG+1", "CO", "HJ", "LJ"]
+
+
 def compute_opponent_style(player: PlayerState) -> str:
     """Label a player's style based on statistical history."""
     if player.hands_played < 3:
@@ -592,6 +597,36 @@ class PokerEngine:
             sb_idx = alive[(dealer_pos + 1) % n]
             bb_idx = alive[(dealer_pos + 2) % n]
         return self.players[sb_idx], self.players[bb_idx]
+
+    def get_position_labels(self) -> dict[str, str]:
+        """Return position label for each active player."""
+        alive = [p for p in self.players if not p.folded]
+        n = len(alive)
+        if n == 0:
+            return {}
+        try:
+            dealer_pos = next(
+                i for i, p in enumerate(alive)
+                if p.name == self.players[self.dealer_idx].name
+            )
+        except StopIteration:
+            return {p.name: "" for p in alive}
+
+        if n == 2:
+            labels_list = POSITION_LABELS_HU
+        elif n == 3:
+            labels_list = POSITION_LABELS_3
+        else:
+            labels_list = POSITION_LABELS_4P
+
+        labels: dict[str, str] = {}
+        for i in range(n):
+            pos = (i - dealer_pos) % n
+            if pos < len(labels_list):
+                labels[alive[i].name] = labels_list[pos]
+            else:
+                labels[alive[i].name] = f"Seat{pos}"
+        return labels
 
     def _get_player(self, name: str) -> PlayerState:
         for p in self.players:

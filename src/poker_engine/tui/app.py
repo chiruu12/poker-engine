@@ -1,4 +1,10 @@
-"""Main TUI application — wires events to visual components."""
+"""Main TUI application — wires events to visual components.
+
+Board reveals (PhaseChangeEvent) are queued and only flushed to the
+display right before the next ActionEvent, ShowdownEvent, or HandEndEvent.
+This keeps the table and action feed visually in sync even when LLM
+decisions take seconds.
+"""
 
 from __future__ import annotations
 
@@ -33,12 +39,7 @@ from poker_engine.tui.table_view import TableView
 
 
 class PokerTUI:
-    """Rich-based terminal UI for watching a poker tournament.
-
-    State is driven by events. Painting is driven by the orchestrator's
-    yield points — NOT by Rich's auto-refresh timer. This guarantees
-    the board and action feed are always in sync.
-    """
+    """Rich-based terminal UI for watching a poker tournament."""
 
     def __init__(self, director: TournamentDirector) -> None:
         self._director = director
@@ -55,11 +56,27 @@ class PokerTUI:
         self._dirty = False
 
         self._player_state: dict[str, dict[str, Any]] = {}
+        self._queued_phases: list[PhaseChangeEvent] = []
 
         self._director.event_bus.subscribe(self._handle_event)
 
+    def _flush_queued_phases(self) -> None:
+        """Render any queued board reveals into table view + action feed."""
+        for phase_evt in self._queued_phases:
+            self._table_view.update_community(phase_evt.community)
+            line = Text()
+            line.append("Board ", style="bold yellow")
+            line.append(f"{phase_evt.phase}: ", style="yellow")
+            for i, c in enumerate(phase_evt.community):
+                if i > 0:
+                    line.append(" ")
+                line.append(c, style=style_for_card(c))
+            self._action_feed.add_rich(line)
+        self._queued_phases.clear()
+
     def _handle_event(self, event: TournamentEvent) -> None:
         if isinstance(event, HandStartEvent):
+            self._queued_phases.clear()
             self._hands_played = event.hand_num
             self._table_view.update_hand_num(event.hand_num)
             self._table_view.update_community([])
@@ -77,17 +94,11 @@ class PokerTUI:
                     self._player_state[name]["hole_cards"] = cards
 
         elif isinstance(event, PhaseChangeEvent):
-            self._table_view.update_community(event.community)
-            line = Text()
-            line.append("Board ", style="bold yellow")
-            line.append(f"{event.phase}: ", style="yellow")
-            for i, c in enumerate(event.community):
-                if i > 0:
-                    line.append(" ")
-                line.append(c, style=style_for_card(c))
-            self._action_feed.add_rich(line)
+            self._queued_phases.append(event)
+            return
 
         elif isinstance(event, ActionEvent):
+            self._flush_queued_phases()
             self._action_feed.add(event.player, event.action, event.amount)
             self._table_view.update_pot(event.pot)
             for ps in self._player_state.values():
@@ -105,6 +116,7 @@ class PokerTUI:
             self._chat.add(event.player, event.message)
 
         elif isinstance(event, ShowdownEvent):
+            self._flush_queued_phases()
             for r in event.results:
                 cards = " ".join(r.get("cards", []))
                 hand = r.get("hand", "")
@@ -113,6 +125,7 @@ class PokerTUI:
                 self._action_feed.add(f"{marker} {r['player']}", f"{cards} → {hand}")
 
         elif isinstance(event, HandEndEvent):
+            self._flush_queued_phases()
             winners = ", ".join(event.winners)
             self._action_feed.add(winners, f"wins ({event.win_reason})")
             self._sync_chips_from_engine()
@@ -132,7 +145,6 @@ class PokerTUI:
         self._dirty = True
 
     def paint(self) -> None:
-        """Force a screen paint. Called from the orchestrator's yield points."""
         if self._live is not None and self._dirty:
             self._live.update(self.build_layout())
             self._live.refresh()

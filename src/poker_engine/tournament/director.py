@@ -43,11 +43,13 @@ class HandOrchestrator:
         players: dict[str, Any],
         event_bus: EventBus,
         table_talk: bool = True,
+        phase_delay: float = 0.0,
     ) -> None:
         self._engine = engine
         self._players = players
         self._event_bus = event_bus
         self._table_talk = table_talk
+        self._phase_delay = phase_delay
         self._toolkits: dict[str, PokerToolkit] = {
             name: PokerToolkit(engine, name, table_talk=table_talk) for name in players
         }
@@ -86,6 +88,8 @@ class HandOrchestrator:
                         community=[str(c) for c in engine.community],
                     )
                 )
+                if self._phase_delay > 0:
+                    await asyncio.sleep(self._phase_delay)
                 continue
 
             current = engine.get_current_player()
@@ -232,6 +236,7 @@ class TournamentDirector:
         payout: PayoutStructure | None = None,
         seed: int | None = None,
         hand_delay: float = 0.0,
+        phase_delay: float = 0.0,
         max_hands: int = 500,
         table_talk: bool = True,
     ) -> None:
@@ -241,6 +246,7 @@ class TournamentDirector:
         self._payout = payout or PayoutStructure.default(len(players))
         self._seed = seed
         self._hand_delay = hand_delay
+        self._phase_delay = phase_delay
         self._max_hands = max_hands
         self._table_talk = table_talk
         self._event_bus = EventBus()
@@ -305,6 +311,7 @@ class TournamentDirector:
                     table.players,
                     self._event_bus,
                     table_talk=self._table_talk,
+                    phase_delay=self._phase_delay,
                 )
                 summary = await orch.play_hand()
 

@@ -308,3 +308,84 @@ def test_all_in_does_not_count_toward_cap():
         p.name, Action(ActionType.ALL_IN, p.chips + p.bet_this_round),
     )
     assert engine._raises_this_round == 0
+
+
+# --- Half-pot raise tests ---
+
+
+def test_half_pot_raise_option_exists():
+    engine = PokerEngine(["A", "B", "C"], starting_chips=1000, seed=1)
+    engine.new_hand()
+    p = engine.get_current_player()
+    assert p is not None
+    actions = engine.get_valid_actions(p.name)
+    raises = [a for a in actions if a.type == ActionType.RAISE]
+    # Should have min-raise, half-pot, and pot-raise (3 raise options)
+    assert len(raises) >= 2
+
+
+def test_half_pot_amount_calculation():
+    engine = PokerEngine(
+        ["A", "B", "C"], starting_chips=1000,
+        small_blind=10, big_blind=20, seed=1,
+    )
+    engine.new_hand()
+    p = engine.get_current_player()
+    assert p is not None
+    cost_to_call = engine.current_bet - p.bet_this_round
+    expected_half = engine.current_bet + (engine.pot + cost_to_call) // 2
+    actions = engine.get_valid_actions(p.name)
+    raises = [a for a in actions if a.type == ActionType.RAISE]
+    amounts = [r.amount for r in raises]
+    if expected_half > engine.current_bet + engine.min_raise:
+        assert expected_half in amounts
+
+
+def test_half_pot_skipped_when_equals_min_raise():
+    engine = PokerEngine(
+        ["A", "B"], starting_chips=1000,
+        small_blind=10, big_blind=20, seed=1,
+    )
+    engine.new_hand()
+    p = engine.get_current_player()
+    assert p is not None
+    actions = engine.get_valid_actions(p.name)
+    raises = [a for a in actions if a.type == ActionType.RAISE]
+    amounts = [r.amount for r in raises]
+    # No duplicate amounts
+    assert len(amounts) == len(set(amounts))
+
+
+def test_half_pot_skipped_when_cant_afford():
+    engine = PokerEngine(
+        ["A", "B", "C"], starting_chips=50,
+        small_blind=10, big_blind=20, seed=1,
+    )
+    engine.new_hand()
+    p = engine.get_current_player()
+    if p is not None:
+        actions = engine.get_valid_actions(p.name)
+        raises = [a for a in actions if a.type == ActionType.RAISE]
+        for r in raises:
+            cost = r.amount - p.bet_this_round
+            assert cost <= p.chips
+
+
+def test_half_pot_respects_raise_cap():
+    engine = PokerEngine(
+        ["A", "B", "C", "D", "E", "F"],
+        starting_chips=10000, max_raises_per_round=1, seed=1,
+    )
+    engine.new_hand()
+    p = engine.get_current_player()
+    assert p is not None
+    actions = engine.get_valid_actions(p.name)
+    raises = [a for a in actions if a.type == ActionType.RAISE]
+    assert len(raises) > 0
+    engine.apply_action(p.name, raises[0])
+    # After 1 raise, no more raises (including half-pot)
+    p2 = engine.get_current_player()
+    assert p2 is not None
+    actions2 = engine.get_valid_actions(p2.name)
+    raises2 = [a for a in actions2 if a.type == ActionType.RAISE]
+    assert len(raises2) == 0

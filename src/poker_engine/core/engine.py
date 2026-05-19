@@ -265,6 +265,11 @@ class PokerEngine:
             if min_raise_cost <= p.chips:
                 actions.append(Action(ActionType.RAISE, min_raise_to))
 
+                half_pot = self.current_bet + (self.pot + cost_to_call) // 2
+                half_pot_cost = half_pot - p.bet_this_round
+                if half_pot_cost <= p.chips and half_pot > min_raise_to:
+                    actions.append(Action(ActionType.RAISE, half_pot))
+
                 pot_raise_to = self.current_bet + self.pot + cost_to_call
                 pot_raise_cost = pot_raise_to - p.bet_this_round
                 if pot_raise_cost <= p.chips and pot_raise_to > min_raise_to:

@@ -73,8 +73,8 @@ def _make_player_box(player: dict[str, Any] | None) -> list[str]:
         cards_plain = " ".join(hole_cards)
         cards_rich = _color_cards_inline(hole_cards)
     else:
-        cards_plain = "?? ??"
-        cards_rich = "[dim]?? ??[/dim]"
+        cards_plain = ""
+        cards_rich = ""
 
     name_str = _pad_center(name_str[:BOX_W], BOX_W)
     chip_str = _pad_center(chip_str[:BOX_W], BOX_W)
@@ -82,7 +82,13 @@ def _make_player_box(player: dict[str, Any] | None) -> list[str]:
     cards_fill = max(0, BOX_W - cards_pad - len(cards_plain))
     cards_line = " " * cards_pad + cards_rich + " " * cards_fill
 
-    if folded:
+    eliminated = chips == 0
+
+    if eliminated:
+        name_str = f"[dim]{name_str}[/dim]"
+        chip_str = f"[dim]{chip_str}[/dim]"
+        cards_line = f"[dim]{_pad_center('', BOX_W)}[/dim]"
+    elif folded:
         name_str = f"[dim]{name_str}[/dim]"
         chip_str = f"[dim]{chip_str}[/dim]"
         cards_line = f"[dim]{_pad_center('folded', BOX_W)}[/dim]"

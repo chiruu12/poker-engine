@@ -9,7 +9,6 @@ from rich.layout import Layout
 from rich.live import Live
 from rich.text import Text
 
-from poker_engine.tui.card_display import style_for_card
 from poker_engine.tournament.director import TournamentDirector, TournamentResult
 from poker_engine.tournament.events import (
     ActionEvent,
@@ -25,6 +24,7 @@ from poker_engine.tournament.events import (
     TournamentEvent,
 )
 from poker_engine.tui.action_feed import ActionFeed
+from poker_engine.tui.card_display import style_for_card
 from poker_engine.tui.chat_panel import ChatPanel
 from poker_engine.tui.commentary import CommentaryPanel
 from poker_engine.tui.stats_panel import StatsPanel
@@ -64,7 +64,6 @@ class PokerTUI:
             for ps in self._player_state.values():
                 ps["folded"] = False
                 ps["is_active"] = False
-                ps["hole_cards"] = []
 
         elif isinstance(event, CardsDealtEvent):
             for name, cards in event.hands.items():

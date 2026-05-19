@@ -65,9 +65,11 @@ class HandOrchestrator:
                 dealer=dealer.name,
             )
         )
+        await asyncio.sleep(0.05)
 
         hands = {p.name: [str(c) for c in p.hole_cards] for p in engine.players if not p.folded}
         self._event_bus.emit(CardsDealtEvent(hands=hands))
+        await asyncio.sleep(0.05)
 
         for name, player in self._players.items():
             await player.observe({"type": "new_hand", "hand_num": engine.hand_num})
@@ -88,6 +90,7 @@ class HandOrchestrator:
                         community=[str(c) for c in engine.community],
                     )
                 )
+                await asyncio.sleep(0.05)
                 if self._phase_delay > 0:
                     await asyncio.sleep(self._phase_delay)
                 continue
@@ -133,6 +136,7 @@ class HandOrchestrator:
                     pot=engine.pot,
                 )
             )
+            await asyncio.sleep(0.05)
 
             for name, p in self._players.items():
                 if name != current.name:
@@ -188,6 +192,7 @@ class HandOrchestrator:
                     for r in summary.results
                 ]
                 self._event_bus.emit(ShowdownEvent(results=showdown_results))
+                await asyncio.sleep(0.05)
 
         self._event_bus.emit(
             HandEndEvent(
@@ -196,6 +201,7 @@ class HandOrchestrator:
                 win_reason=summary.win_reason,
             )
         )
+        await asyncio.sleep(0.05)
         engine.rotate_dealer()
 
         return summary

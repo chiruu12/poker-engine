@@ -7,7 +7,7 @@ from collections import deque
 from rich.panel import Panel
 from rich.text import Text
 
-MAX_LINE_LEN = 80
+MAX_LINE_LEN = 72
 
 
 class CommentaryPanel:
@@ -29,10 +29,13 @@ class CommentaryPanel:
         line.append(truncated, style="italic")
         self._entries.append(line)
 
-    def render(self) -> Panel:
+    def render(self, height: int | None = None) -> Panel:
         """Render the commentary panel."""
         content = Text()
-        for i, entry in enumerate(self._entries):
+        max_rows = max(1, (height or 10) - 2)
+        entries = list(self._entries)[-max_rows:]
+
+        for i, entry in enumerate(entries):
             if i > 0:
                 content.append("\n")
             content.append_text(entry)
@@ -44,5 +47,5 @@ class CommentaryPanel:
             content,
             title="[bold]Agent Thoughts[/bold]",
             border_style="cyan",
-            height=10,
+            height=height or 10,
         )

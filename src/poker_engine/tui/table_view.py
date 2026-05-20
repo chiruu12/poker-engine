@@ -187,7 +187,7 @@ class TableView:
     def update_hand_num(self, hand_num: int) -> None:
         self._hand_num = hand_num
 
-    def render(self) -> Panel:
+    def render(self, height: int | None = None) -> Panel:
         n = max(len(self._players), 2)
         layout_key = min(n, 9)
         layout = SEAT_LAYOUTS[layout_key]
@@ -220,7 +220,7 @@ class TableView:
             text,
             title="[bold green]♠ ♥ Poker Table ♦ ♣[/bold green]",
             border_style="green",
-            height=18,
+            height=height or 18,
         )
 
     def _get_player(self, idx: int) -> dict[str, Any] | None:

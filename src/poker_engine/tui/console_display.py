@@ -6,6 +6,8 @@ full-screen TUI layout. Subscribes to the same EventBus as PokerTUI.
 
 from __future__ import annotations
 
+from textwrap import shorten
+
 from rich.console import Console
 from rich.markup import escape
 from rich.table import Table
@@ -34,6 +36,9 @@ ACTION_STYLES = {
     "all_in": "bold magenta",
 }
 
+MAX_NAME_LEN = 14
+MAX_MESSAGE_LEN = 88
+
 
 def _color_card(c: str) -> str:
     for suit, style in SUIT_STYLES.items():
@@ -44,6 +49,14 @@ def _color_card(c: str) -> str:
 
 def _color_cards(cards: list[str]) -> str:
     return " ".join(_color_card(c) for c in cards)
+
+
+def _short(text: str, width: int) -> str:
+    return shorten(" ".join(text.split()), width=width, placeholder="...")
+
+
+def _name(text: str) -> str:
+    return _short(text, MAX_NAME_LEN)
 
 
 class ConsoleDisplay:
@@ -77,7 +90,7 @@ class ConsoleDisplay:
 
         elif isinstance(event, CardsDealtEvent):
             for name, cards in event.hands.items():
-                c.print(f"  [dim]Dealt[/dim]  {name:>10}:  {_color_cards(cards)}")
+                c.print(f"  [dim]Dealt[/dim]  {_name(name):>14}:  {_color_cards(cards)}")
 
         elif isinstance(event, PhaseChangeEvent):
             cards = _color_cards(event.community)
@@ -91,14 +104,14 @@ class ConsoleDisplay:
             elif event.action == "all_in":
                 amt = " ALL-IN"
             c.print(
-                f"    [{style}]{event.player:>10}: "
+                f"    [{style}]{_name(event.player):>14}: "
                 f"{event.action}{amt}[/{style}]"
                 f"  [dim]pot ${event.pot}[/dim]"
             )
 
         elif isinstance(event, CommentaryEvent):
-            short = event.text[:80] + "..." if len(event.text) > 80 else event.text
-            c.print(f"    [dim italic]💭 {event.player}: {escape(short)}[/dim italic]")
+            short = _short(event.text, MAX_MESSAGE_LEN)
+            c.print(f"    [dim italic]thought {_name(event.player)}: {escape(short)}[/dim italic]")
 
         elif isinstance(event, ShowdownEvent):
             c.print()
@@ -108,7 +121,7 @@ class ConsoleDisplay:
                 player = r["player"]
                 won = r["winnings"]
                 marker = "[bold green] ★[/bold green]" if won > 0 else "  "
-                c.print(f"  {marker} {player:>10}:  {cards}  →  [bold]{hand}[/bold]")
+                c.print(f"  {marker} {_name(player):>14}:  {cards}  ->  [bold]{hand}[/bold]")
 
         elif isinstance(event, HandEndEvent):
             winners = ", ".join(event.winners)
@@ -122,9 +135,9 @@ class ConsoleDisplay:
             self._current_blind["bb"] = event.big_blind
 
         elif isinstance(event, TableTalkEvent):
-            c.print(
-                f'    [magenta]{event.player}:[/magenta] [italic]"{escape(event.message)}"[/italic]'
-            )
+            message = _short(event.message, MAX_MESSAGE_LEN)
+            player = _name(event.player)
+            c.print(f'    [magenta]{player}:[/magenta] [italic]"{escape(message)}"[/italic]')
 
         elif isinstance(event, EliminationEvent):
             c.print(f"  [bold red]💀 {event.player} eliminated (#{event.position})[/bold red]")

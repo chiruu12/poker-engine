@@ -35,7 +35,7 @@ class StatsPanel:
         self._blind_level = blind_level
         self._hands_played = hands_played
 
-    def render(self) -> Panel:
+    def render(self, height: int | None = None) -> Panel:
         """Render the stats panel with a chip-bar table."""
         table = Table(expand=True, show_header=True, header_style="bold")
         table.add_column("Player", style="bold", ratio=2)
@@ -45,7 +45,8 @@ class StatsPanel:
         max_chips = max((s["chips"] for s in self._standings), default=1)
         max_chips = max(max_chips, 1)
 
-        for s in self._standings:
+        max_rows = max(1, (height or 10) - 4)
+        for s in self._standings[:max_rows]:
             chips = s["chips"]
             name = s["name"]
             filled = int((chips / max_chips) * BAR_WIDTH)
@@ -69,4 +70,5 @@ class StatsPanel:
             title="[bold]Standings[/bold]",
             subtitle=subtitle,
             border_style="yellow",
+            height=height,
         )

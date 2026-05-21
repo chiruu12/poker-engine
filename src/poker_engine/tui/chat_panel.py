@@ -15,15 +15,18 @@ class ChatPanel:
         self._entries: deque[Text] = deque(maxlen=maxlen)
 
     def add(self, player: str, message: str) -> None:
-        truncated = message[:100] + "..." if len(message) > 100 else message
+        truncated = message[:72] + "..." if len(message) > 72 else message
         line = Text()
         line.append(f"{player}: ", style="bold cyan")
         line.append(truncated)
         self._entries.append(line)
 
-    def render(self) -> Panel:
+    def render(self, height: int | None = None) -> Panel:
         content = Text()
-        for i, entry in enumerate(self._entries):
+        max_rows = max(1, (height or 10) - 2)
+        entries = list(self._entries)[-max_rows:]
+
+        for i, entry in enumerate(entries):
             if i > 0:
                 content.append("\n")
             content.append_text(entry)
@@ -35,5 +38,5 @@ class ChatPanel:
             content,
             title="[bold]Table Talk[/bold]",
             border_style="magenta",
-            height=10,
+            height=height or 10,
         )

@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 from collections import deque
+from textwrap import shorten
 
 from rich.panel import Panel
 from rich.text import Text
 
 from poker_engine.tui.theme import ACTION_COLORS
+
+MAX_LABEL_LEN = 22
 
 
 class ActionFeed:
@@ -19,7 +22,7 @@ class ActionFeed:
     def add(self, player: str, action: str, amount: int = 0) -> None:
         color = ACTION_COLORS.get(action, "white")
         line = Text()
-        line.append(f"{player} ", style="bold")
+        line.append(f"{shorten(player, width=MAX_LABEL_LEN, placeholder='...')} ", style="bold")
         if amount > 0:
             line.append(f"{action} ${amount:,}", style=color)
         else:
@@ -29,9 +32,12 @@ class ActionFeed:
     def add_rich(self, text: Text) -> None:
         self._entries.append(text)
 
-    def render(self) -> Panel:
+    def render(self, height: int | None = None) -> Panel:
         content = Text()
-        for i, entry in enumerate(self._entries):
+        max_rows = max(1, (height or 10) - 2)
+        entries = list(self._entries)[-max_rows:]
+
+        for i, entry in enumerate(entries):
             if i > 0:
                 content.append("\n")
             content.append_text(entry)
@@ -43,5 +49,5 @@ class ActionFeed:
             content,
             title="[bold]Actions[/bold]",
             border_style="blue",
-            height=10,
+            height=height or 10,
         )

@@ -193,23 +193,38 @@ class PokerTUI:
             hands_played=self._hands_played,
         )
 
+    def _layout_sizes(self) -> tuple[int, int, int]:
+        terminal_height = max(22, self._console.size.height - 1)
+        if terminal_height >= 38:
+            return 18, 10, 10
+        if terminal_height >= 30:
+            middle_size = 8
+            stats_size = 7
+        else:
+            middle_size = 6
+            stats_size = 6
+        table_size = max(10, terminal_height - middle_size - stats_size)
+        return table_size, middle_size, stats_size
+
     def build_layout(self) -> Layout:
+        table_size, middle_size, stats_size = self._layout_sizes()
+
         layout = Layout()
         layout.split_column(
-            Layout(name="table", size=18),
-            Layout(name="middle", size=10),
-            Layout(name="stats", size=10),
+            Layout(name="table", size=table_size),
+            Layout(name="middle", size=middle_size),
+            Layout(name="stats", size=stats_size),
         )
         layout["middle"].split_row(
             Layout(name="actions", ratio=2),
             Layout(name="chat", ratio=2),
             Layout(name="thoughts", ratio=2),
         )
-        layout["table"].update(self._table_view.render())
-        layout["actions"].update(self._action_feed.render())
-        layout["chat"].update(self._chat.render())
-        layout["thoughts"].update(self._commentary.render())
-        layout["stats"].update(self._stats.render())
+        layout["table"].update(self._table_view.render(height=table_size))
+        layout["actions"].update(self._action_feed.render(height=middle_size))
+        layout["chat"].update(self._chat.render(height=middle_size))
+        layout["thoughts"].update(self._commentary.render(height=middle_size))
+        layout["stats"].update(self._stats.render(height=stats_size))
         return layout
 
     async def run(self) -> TournamentResult:

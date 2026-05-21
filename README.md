@@ -1,6 +1,6 @@
 # PokerTable
 
-Pure Texas Hold'em engine with Monte Carlo equity calculator. Zero dependencies. Designed for AI agents.
+Texas Hold'em engine with LLM agent tournaments, poker tools, CLI commands, and Rich terminal displays. Designed for agent frameworks, but usable as a plain game engine.
 
 ```python
 from poker_engine import PokerEngine, Action, ActionType
@@ -33,24 +33,31 @@ pip install pokertable
 - Proper side pots for multi-player all-ins
 - Correct betting round termination (raise resets action)
 - Dealer button rotation with heads-up special rules
-- Monte Carlo equity calculator (~500 simulations, <100ms)
+- Monte Carlo equity calculator plus preflop/range helpers
 - Hand evaluation for all 10 poker hand ranks
 - Human-readable hand descriptions ("Full House, Kings over Tens")
 - Turn-based API designed for AI agent integration
+- Decorator-based poker tools for LLM providers and agent frameworks
+- Tournament director, blind schedules, event bus, payouts, and history
+- Rich console display and adaptive poker-table TUI
 - Seeded RNG for reproducible games
-- Zero external dependencies
 
 ## Architecture
 
 ```
 src/poker_engine/
-├── cards.py      # Card, Suit, HandRank, evaluate_hand, describe_hand
-├── engine.py     # PokerEngine state machine (the core)
-├── equity.py     # Monte Carlo win probability calculator
+├── core/         # PokerEngine state machine, cards, hand evaluation
+├── equity/       # Monte Carlo, preflop lookup, ranges, cache
+├── tools/        # @tool decorator, schemas, registry, poker toolkits
+├── players/      # Human, random, scripted, and LLM player interfaces
+├── tournament/   # Director, events, blinds, payout, history, table manager
+├── config/       # YAML config models and loader
+├── tui/          # Rich table view, console display, action/thought panels
+├── cli.py        # `poker` command
 └── __init__.py   # Public API exports
 ```
 
-The engine is a pure state machine — no I/O, no async, no display logic. You call methods, it returns state. This makes it easy to wrap with any interface: CLI, web, AI agents, etc.
+The core engine stays a pure state machine. The tournament, player, tools, CLI, and TUI layers wrap it without making the rules engine depend on any one provider or framework.
 
 ## Usage
 
@@ -97,6 +104,31 @@ equity = calculate_equity(hole, community, num_opponents=3, num_simulations=1000
 print(f"Hand: {equity.current_hand}")           # "Pair of As"
 print(f"Win: {equity.win_probability:.0%}")      # "~82%"
 print(f"Improvements: {equity.hand_improvement}") # {"Pair": 0.45, "Two Pair": 0.12, ...}
+```
+
+### CLI And TUI
+
+```bash
+# Quick tournament with random players
+poker quick --players 4 --seed 42 --hands 10
+
+# Equity calculator
+poker equity As Kh --opponents 3
+
+# From a source checkout: graphical poker table demo
+uv run python tmp-playground/run_tui.py
+
+# From a source checkout: scrolling console demo
+uv run python tmp-playground/run_table.py
+
+# From a source checkout: real-model TUI demo
+uv run python tmp-playground/run_real_tui.py
+```
+
+The importable displays are available as:
+
+```python
+from poker_engine.tui import ConsoleDisplay, PokerTUI
 ```
 
 ## Development

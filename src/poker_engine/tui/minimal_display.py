@@ -140,7 +140,7 @@ class MinimalDisplay:
             bar = f"[green]{'█' * filled}[/green]{'░' * (bar_width - filled)}"
             table.add_row(
                 str(i),
-                s["name"],
+                name_pad(s["name"]),
                 f"${s['chips']:,}",
                 str(s["hands_won"]),
                 str(s["hands_played"]),
@@ -151,5 +151,6 @@ class MinimalDisplay:
 
 
 def name_pad(name: str) -> str:
-    truncated = name[:MAX_NAME] if len(name) > MAX_NAME else name
+    from textwrap import shorten
+    truncated = shorten(name, width=MAX_NAME, placeholder="…")
     return f"{truncated:>{MAX_NAME}}"

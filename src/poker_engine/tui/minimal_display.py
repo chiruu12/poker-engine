@@ -152,5 +152,6 @@ class MinimalDisplay:
 
 def name_pad(name: str) -> str:
     from textwrap import shorten
+
     truncated = shorten(name, width=MAX_NAME, placeholder="…")
     return f"{truncated:>{MAX_NAME}}"

@@ -45,7 +45,7 @@ class StatsPanel:
         max_chips = max((s["chips"] for s in self._standings), default=1)
         max_chips = max(max_chips, 1)
 
-        max_rows = max(1, (height or 10) - 4)
+        max_rows = max(1, height - 4) if height is not None else len(self._standings)
         for s in self._standings[:max_rows]:
             chips = s["chips"]
             name = s["name"]

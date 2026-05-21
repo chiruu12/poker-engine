@@ -153,4 +153,5 @@ class MinimalDisplay:
 
 
 def name_pad(name: str) -> str:
-    return f"{name:>{MAX_NAME}}"
+    truncated = name[:MAX_NAME] if len(name) > MAX_NAME else name
+    return f"{truncated:>{MAX_NAME}}"

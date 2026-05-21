@@ -58,6 +58,7 @@ class LocalPlayer:
             self._last_thought = raw.strip()[:120]
             return self._parse(raw, valid_actions)
         except Exception:
+            self._last_thought = None
             return _default(valid_actions)
 
     async def observe(self, event: dict[str, Any]) -> None:

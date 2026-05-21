@@ -98,8 +98,7 @@ class MinimalDisplay:
                 won = r["winnings"]
                 marker = "[bold green] ★[/bold green]" if won > 0 else "  "
                 c.print(
-                    f"  {marker} {name_pad(r['player'])}:  {cards}  "
-                    f"->  [bold]{r['hand']}[/bold]"
+                    f"  {marker} {name_pad(r['player'])}:  {cards}  ->  [bold]{r['hand']}[/bold]"
                 )
 
         elif isinstance(event, HandEndEvent):
